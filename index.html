@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Negación Erótica — Tragaperras Diario + Modo Especial</title>
+<style>
+body{
+  background:#111;
+  color:#fff;
+  font-family: system-ui;
+  padding:20px;
+  text-align:center;
+}
+.card{
+  background:#222;
+  padding:16px;
+  border-radius:10px;
+  margin:10px auto;
+  max-width:600px;
+}
+#slotContainer{
+  padding:20px;
+  background:#000;
+  border-radius:12px;
+  display:inline-block;
+  margin-top:20px;
+  position:relative;
+  overflow:hidden;
+  height:90px;
+}
+.grid3{
+  display:grid;
+  grid-template-columns:repeat(3,80px);
+  grid-gap:10px;
+  justify-content:center;
+}
+.cell{
+  width:80px;
+  height:80px;
+  background:#333;
+  border-radius:8px;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  font-size:40px;
+  transition: transform 0.3s;
+}
+button{
+  padding:10px 16px;
+  border:none;
+  border-radius:8px;
+  background:#0af;
+  color:white;
+  font-weight:bold;
+  cursor:pointer;
+  margin:5px;
+}
+button:disabled{
+  background:#555;
+  cursor:not-allowed;
+}
+.modo-especial-marco{
+  border:6px solid gold;
+  box-shadow:0 0 20px gold, 0 0 40px goldenrod;
+  animation:brilloMarco 2s infinite alternate;
+}
+@keyframes brilloMarco{
+  0%{ box-shadow:0 0 10px gold; }
+  100%{ box-shadow:0 0 35px rgb(255,215,0); }
+}
+.luces-arcade{
+  position:relative;
+}
+.luces-arcade::before,
+.luces-arcade::after{
+  content:"";
+  position:absolute;
+  height:8px;
+  width:100%;
+  left:0;
+  background:linear-gradient(
+    90deg,
+    red, orange, yellow, lime, cyan, blue, purple, red
+  );
+  background-size:400% 100%;
+  animation:lucesArcade 3s linear infinite;
+}
+.luces-arcade::before{ top:-14px; }
+.luces-arcade::after{ bottom:-14px; }
+@keyframes lucesArcade{
+  0%{ background-position:0%; }
+  100%{ background-position:400%; }
+}
+</style>
+</head>
+<body>
+<h1>🎰 Negación Erótica — Tragaperras Diario + Modo Especial</h1>
+<audio id="modoMusica" src="arcade_theme.mp3"></audio>
+<div id="slotContainer">
+  <div class="grid3" id="grid"></div>
+</div>
+<br>
+<input type="text" id="usuarioInput" placeholder="Tu nombre de usuario">
+<br>
+<button id="spinBtn">🎰 Girar</button>
+<button id="resetBtn">🔄 Reiniciar</button>
+<p id="msg"></p>
+<p id="stats"></p>
+<p id="racha"></p>
+<p id="prob"></p>
+<div class="card">
+  <h3>Historial de días</h3>
+  <div id="historial"></div>
+</div>
+
+<script>
+const grid = document.getElementById("grid");
+const msg = document.getElementById("msg");
+const stats = document.getElementById("stats");
+const probTxt = document.getElementById("prob");
+const rachaTxt = document.getElementById("racha");
+const historialDiv = document.getElementById("historial");
+const usuarioInput = document.getElementById("usuarioInput");
+
+const webAppURL = "https://script.google.com/macros/s/AKfycbxpEn6cTShj6Gl1kExXOOUrSCBojIt5pDcUxvWSeXtjt0svkcMlr4pM52BCVfJcUODSWA/exec"; // reemplazar con tu URL
+
+let modoEspecial = localStorage.getItem("modoEspecial") === "true";
+let symbolsBase = ["🍒","🍋","🔔","💎"];
+let symbolsEspecial = "⭐";
+let prob = parseFloat(localStorage.getItem("prob")) || 50;
+let ultimoDia = localStorage.getItem("ultimoDia") || "";
+let racha = parseInt(localStorage.getItem("racha")) || 0;
+let historial = JSON.parse(localStorage.getItem("historialDias") || "[]");
+let usuario = localStorage.getItem("usuario") || "anonimo";
+
+usuarioInput.value = usuario;
+usuarioInput.onchange = ()=>{
+  usuario = usuarioInput.value.trim() || "anonimo";
+  localStorage.setItem("usuario", usuario);
+};
+
+function hoy(){ return new Date().toISOString().split("T")[0]; }
+function guardar(){
+  localStorage.setItem("prob", prob);
+  localStorage.setItem("ultimoDia", hoy());
+  localStorage.setItem("racha", racha);
+  localStorage.setItem("modoEspecial", modoEspecial);
+  localStorage.setItem("historialDias", JSON.stringify(historial));
+}
+function addHistorial(texto){
+  historial.push({fecha:hoy(), texto});
+  localStorage.setItem("historialDias", JSON.stringify(historial));
+  renderHistorial();
+}
+function renderHistorial(){
+  historialDiv.innerHTML = historial.map(h=>`<div>📅 ${h.fecha}: ${h.texto}</div>`).join("");
+}
+function activarModoEspecial(){
+  const slot = document.getElementById("slotContainer");
+  slot.classList.add("modo-especial-marco");
+  slot.classList.add("luces-arcade");
+  const audio = document.getElementById("modoMusica");
+  audio.loop=true; audio.play();
+  modoEspecial = true;
+  addHistorial("Modo Especial desbloqueado");
+  guardar();
+}
+if(modoEspecial) activarModoEspecial();
+
+for(let i=0;i<3;i++){
+  const c=document.createElement("div"); c.className="cell"; c.id="c"+i; grid.appendChild(c);
+}
+
+function getSymbol(){
+  if(modoEspecial && Math.random()<0.05) return "⭐";
+  return symbolsBase[Math.floor(Math.random()*symbolsBase.length)];
+}
+
+function evaluate(a,b,c){
+  if(a===b && b===c){ if(a==="⭐") return 999; return 100; }
+  if(a===b || b===c) return 10;
+  return 0;
+}
+
+function intentoDisponible(){ return ultimoDia!==hoy(); }
+
+function actualizarRacha(){
+  if(ultimoDia===hoy()) return;
+  const ayer = new Date(); ayer.setDate(ayer.getDate()-1);
+  const ayerStr = ayer.toISOString().split("T")[0];
+  if(ultimoDia===ayerStr) racha++;
+  else { racha=0; prob-=10; if(prob<0)prob=0; addHistorial("Racha rota (–10% prob.)"); }
+  if(racha===5){ prob+=5; addHistorial("+5% por 5 días consecutivos"); }
+  if(racha===10){ prob+=10; addHistorial("+10% por 10 días consecutivos"); }
+  if(racha===20 && !modoEspecial) activarModoEspecial();
+  guardar();
+}
+
+function girarRodillos(finalSymbols){
+  const spins = 15;
+  const delay = 80;
+  let count = 0;
+  const interval = setInterval(()=>{
+    for(let i=0;i<3;i++){
+      const sym = symbolsBase[Math.floor(Math.random()*symbolsBase.length)];
+      document.getElementById("c"+i).textContent=sym;
+    }
+    count++;
+    if(count>=spins){
+      clearInterval(interval);
+      for(let i=0;i<3;i++){
+        document.getElementById("c"+i).textContent=finalSymbols[i];
+      }
+    }
+  },delay);
+}
+
+function guardarEnSheets(evento){
+  const payload = {
+    usuario: usuario,
+    evento: evento,
+    probabilidad: prob,
+    racha: racha
+  };
+  fetch(webAppURL,{
+    method:"POST",
+    body:JSON.stringify(payload),
+    headers:{"Content-Type":"application/json"}
+  })
+  .then(res=>res.json())
+  .then(data=>console.log("Guardado en Sheets:", data))
+  .catch(err=>console.error("Error al guardar en Sheets:", err));
+}
+
+document.getElementById("spinBtn").onclick = () => {
+  if(!intentoDisponible()){ msg.textContent="Hoy ya usaste tu intento."; return; }
+  actualizarRacha();
+  const a=getSymbol(), b=getSymbol(), c=getSymbol();
+  girarRodillos([a,b,c]);
+  const premio=evaluate(a,b,c);
+  const dado=Math.random()*100;
+  if(dado<prob){ 
+    msg.textContent=`✔ Permitido (${dado.toFixed(2)} < ${prob}%)`; 
+    addHistorial("Permitido"); 
+    guardarEnSheets("Permitido");
+  } else { 
+    msg.textContent=`✘ Negado (${dado.toFixed(2)} ≥ ${prob}%)`; 
+    addHistorial("Negado"); 
+    guardarEnSheets("Negado");
+  }
+  prob-=10; if(prob<0)prob=0;
+  guardar(); actualizarUI();
+};
+
+document.getElementById("resetBtn").onclick=()=>{
+  localStorage.clear(); location.reload();
+};
+
+function actualizarUI(){
+  stats.textContent=`Ultimo día jugado: ${ultimoDia}`;
+  probTxt.textContent=`Probabilidad actual: ${prob}%`;
+  rachaTxt.textContent=`Racha: ${racha} días`;
+}
+
+renderHistorial();
+actualizarUI();
+</script>
+</body>
+</html>
