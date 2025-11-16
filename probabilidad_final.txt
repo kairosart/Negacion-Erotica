@@ -1,0 +1,106 @@
+que significa la probabilidad final?
+
+La probabilidad final en la simulación significa:
+
+✅ La probabilidad (%) que tendrías después de vivir las 100.000 tiradas simuladas,
+
+siguiendo exactamente las mismas reglas que tu juego real:
+
+Cada tirada usada reduce la probabilidad en –10%.
+
+Rachas de 5 días → +5%
+
+Rachas de 10 días → +10%
+
+Rachas ≥ 20 días → +15%
+
+Límite inferior 0%
+
+Límite superior 100%
+
+🔍 ¿Por qué esa probabilidad cambia tanto?
+
+Porque durante la simulación:
+
+Algunas secuencias de tiradas aciertan → sube la probabilidad (por bonificaciones de racha).
+
+Otras fallan → baja la probabilidad (–10%).
+
+Si hay varias rachas rotas → baja más.
+
+Si hay rachas largas → sube mucho.
+
+Resultado: la simulación te muestra hacia dónde tiende el sistema, un equilibrio dinámico entre subidas y bajadas.
+
+📌 Ejemplo claro
+
+Supongamos que:
+
+Empezaste en 50%
+
+Durante las 100.000 tiradas simuladas hubo muchas rachas rotas → “probabilidad final” podría ser 12%
+
+O si hubo rachas largas → podría acabar en 100%
+
+No significa que ahora mismo tu probabilidad sea esa.
+
+👉 Es la probabilidad teórica después de correr 100.000 días del juego.
+
+📌 Entonces, ¿para qué sirve la probabilidad final?
+
+Sirve para:
+
+✔ Ver si el sistema está equilibrado
+
+Si siempre termina en 0% → el sistema es demasiado duro.
+Si siempre termina en 100% → el sistema es demasiado generoso.
+
+✔ Ajustar bonificaciones
+
+Te ayuda a mejorar el diseño del juego.
+
+✔ Ver tendencias del comportamiento del jugador
+
+Cuántas rachas largas suele haber, cuántos jackpots, etc.
+
+❓ ¿Quieres que la simulación te muestre también:
+
+la probabilidad media,
+
+la probabilidad mínima,
+
+la probabilidad máxima,
+
+y un gráfico de cómo fue subiendo/bajando cada día**?
+
+
+
+
+
+---------------------------------------------------------------------
+
+
+
+Exactamente. Esa “probabilidad final” que vemos al final de las simulaciones o después de varios días de juego no es un valor aleatorio más: es un indicador de cómo está equilibrado el sistema.
+
+Te explico con detalle:
+
+1️⃣ Función de la probabilidad final
+
+Medir dificultad: Si tras muchas tiradas la probabilidad baja mucho (por ejemplo, 0–10%), significa que el sistema es muy restrictivo y casi nunca permite “permitido”.
+
+Medir generosidad: Si tras muchas tiradas la probabilidad sube mucho (por ejemplo, 90–100%), el sistema es demasiado indulgente y todo el mundo obtiene permiso fácilmente.
+
+Ajuste dinámico: Como en tu juego, la probabilidad se ajusta según rachas y acciones (video, días consecutivos, jackpots). La probabilidad final muestra el efecto acumulado de todas estas reglas.
+
+2️⃣ Cómo usarla
+
+Tras simular muchas tiradas (como las 100.000), mirar la probabilidad final te dice si tu juego se mantiene equilibrado o se descontrola.
+
+Si es demasiado baja → puedes reducir la penalización por fallo.
+
+Si es demasiado alta → puedes aumentar la penalización o disminuir las bonificaciones.
+
+En otras palabras: no es un “resultado de tirada”, sino un termómetro del equilibrio del sistema.
+
+Si quieres, puedo hacer un mini gráfico que muestre cómo la probabilidad tiende hacia un valor “estable” a lo largo de muchas tiradas, para que visualmente veas si tu juego está equilibrado o no.

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tragaperras Negación Erótica — GitHub Pages</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+body{
+  background:#111; color:#fff; font-family:system-ui; text-align:center; padding:20px;
+}
+button{
+  padding:10px 16px; margin:5px; border:none; border-radius:8px; background:#0af; color:#fff; font-weight:bold; cursor:pointer;
+}
+button:disabled{background:#555; cursor:not-allowed;}
+#slotContainer{
+  display:flex; justify-content:center; margin-top:20px;
+}
+.cell{
+  width:80px; height:80px; background:#222; border-radius:8px; margin:0 5px; display:flex; justify-content:center; align-items:center; font-size:40px; transition: transform 0.3s;
+}
+.modo-especial-marco{
+  border:6px solid gold; box-shadow:0 0 20px gold,0 0 40px goldenrod; animation:brilloMarco 2s infinite alternate;
+}
+@keyframes brilloMarco{
+  0%{ box-shadow:0 0 10px gold; } 100%{ box-shadow:0 0 35px gold; }
+}
+.permitido{color:limegreen; font-weight:bold;}
+.negado{color:red; font-weight:bold;}
+.card{background:#222; padding:16px; border-radius:10px; margin:10px auto; max-width:600px;}
+canvas{background:#111; margin-top:10px; border-radius:8px;}
+</style>
+</head>
+<body>
+<h1>🎰 Negación Erótica</h1>
+
+<audio id="audioFondo" src="arcade_theme.mp3" loop></audio>
+<button id="playAudioBtn">▶️ Iniciar Música</button>
+
+<div id="slotContainer">
+  <div class="cell" id="c0">🍒</div>
+  <div class="cell" id="c1">🍋</div>
+  <div class="cell" id="c2">🔔</div>
+</div>
+
+<br>
+<button id="spinBtn">🎰 Girar</button>
+<button id="verVideoBtn">🎥 Ver video no atractivo (+5%)</button>
+<button id="verReglasBtn">📜 Ver Reglas</button>
+<button id="simularBtn">🧪 Simular 100,000 tiradas</button>
+<p id="msg"></p>
+<p id="stats"></p>
+<p id="racha"></p>
+
+<div class="card">
+  <h3>Historial de días</h3>
+  <div id="historial"></div>
+</div>
+
+<h3>Top 10 combinaciones</h3>
+<canvas id="histogramCanvas" width="600" height="300"></canvas>
+
+<h3>Evolución probabilidad</h3>
+<canvas id="probabilidadCanvas" width="600" height="150"></canvas>
+
+<script>
+const cells = [0,1,2].map(i=>document.getElementById("c"+i));
+const msg = document.getElementById("msg");
+const stats = document.getElementById("stats");
+const rachaTxt = document.getElementById("racha");
+const historialDiv = document.getElementById("historial");
+
+let symbolsBase = ["🍒","🍋","🔔","💎"];
+let prob = parseFloat(localStorage.getItem("prob"))||50;
+let ultimoDia = localStorage.getItem("ultimoDia")||"";
+let racha = parseInt(localStorage.getItem("racha"))||0;
+let historial = JSON.parse(localStorage.getItem("historialDias")||"[]");
+let videoVistoHoy = localStorage.getItem("videoVistoHoy")===new Date().toISOString().split("T")[0];
+let modoEspecial = localStorage.getItem("modoEspecial")==="true";
+
+function hoy(){ return new Date().toISOString().split("T")[0]; }
+function guardar(){ 
+  localStorage.setItem("prob", prob);
+  localStorage.setItem("ultimoDia", ultimoDia);
+  localStorage.setItem("racha", racha);
+  localStorage.setItem("modoEspecial", modoEspecial);
+  localStorage.setItem("historialDias", JSON.stringify(historial));
+  localStorage.setItem("videoVistoHoy", videoVistoHoy?hoy():"");
+}
+function addHistorial(texto){
+  historial.push({fecha:hoy(), texto});
+  guardar();
+  renderHistorial();
+}
+function renderHistorial(){
+  historialDiv.innerHTML = historial.map(h=>`<div>📅 ${h.fecha}: ${h.texto}</div>`).join("");
+}
+function intentoDisponible(){ return ultimoDia!==hoy(); }
+function actualizarRacha(){
+  const ayer = new Date(); ayer.setDate(ayer.getDate()-1);
+  const ayerStr = ayer.toISOString().split("T")[0];
+  if(ultimoDia===ayerStr) racha++;
+  else if(ultimoDia!==hoy()){ racha=0; prob-=5; if(prob<0)prob=0; addHistorial("Racha rota (–5% prob.)"); }
+  if(racha===5){ prob+=3; addHistorial("+3% por 5 días consecutivos"); }
+  if(racha===10){ prob+=6; addHistorial("+6% por 10 días consecutivos"); }
+  if(racha>=20 && !modoEspecial) activarModoEspecial();
+  if(prob>100) prob=100;
+  guardar();
+}
+function activarModoEspecial(){
+  document.getElementById("slotContainer").classList.add("modo-especial-marco");
+  modoEspecial=true;
+  addHistorial("Modo Especial desbloqueado");
+}
+function getSymbol(){ return modoEspecial && Math.random()<0.05?"⭐":symbolsBase[Math.floor(Math.random()*symbolsBase.length)]; }
+function girarRodillos(finalSymbols){
+  let spins=15, count=0
