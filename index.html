@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Negación Erótica — Sistema Diario + Modo Especial</title>
+<title>Tragaperras Animadas — Sistema Diario + Modo Especial</title>
 <style>
 body{
   background:#111;
@@ -92,22 +92,15 @@ button:disabled{
   0%{ background-position:0%; }
   100%{ background-position:400%; }
 }
-#msg span.permitido{ color: lime; font-weight:bold; }
-#msg span.negado{ color: red; font-weight:bold; }
-#reglasModal{
-  display:none; position:fixed; top:0; left:0; width:100%; height:100%;
-  background:rgba(0,0,0,0.8); color:#fff; text-align:left;
-  padding:40px; overflow:auto;
-}
-#reglasModal button{
-  margin-top:20px; background:#0af;
+#msg{
+  font-size:1.2em;
+  font-weight:bold;
 }
 </style>
 </head>
 <body>
 <h1>🎰 Negación Erótica — Sistema Diario</h1>
 <audio id="modoMusica" src="arcade_theme.mp3"></audio>
-
 <div id="slotContainer">
   <div class="grid3" id="grid"></div>
 </div>
@@ -115,28 +108,14 @@ button:disabled{
 <button id="spinBtn">🎰 Girar</button>
 <button id="verVideoBtn">🎥 Ver video no atractivo (+5%)</button>
 <button id="resetBtn">🔄 Reiniciar</button>
-<button id="verReglasBtn">📜 Ver reglas</button>
-
+<button id="verReglasBtn">📖 Ver Reglas</button>
 <p id="msg"></p>
 <p id="stats"></p>
 <p id="racha"></p>
 <p id="prob"></p>
-
 <div class="card">
   <h3>Historial de días</h3>
   <div id="historial"></div>
-</div>
-
-<div id="reglasModal">
-  <h2>Reglas del juego</h2>
-  <ul>
-    <li>🎰 Solo puedes girar una vez al día.</li>
-    <li>🎯 El resultado puede ser "Permitido" o "Negado".</li>
-    <li>🔥 Rachas de 5, 10 y 20 días consecutivos aumentan tus posibilidades.</li>
-    <li>⭐ Al alcanzar 20 días se desbloquea el Modo Especial.</li>
-    <li>🎥 Puedes ver un video no atractivo para aumentar un 5% tus posibilidades una vez al día.</li>
-  </ul>
-  <button id="cerrarReglas">Cerrar</button>
 </div>
 
 <script>
@@ -146,7 +125,6 @@ const stats = document.getElementById("stats");
 const probTxt = document.getElementById("prob");
 const rachaTxt = document.getElementById("racha");
 const historialDiv = document.getElementById("historial");
-const audio = document.getElementById("modoMusica");
 
 let modoEspecial = localStorage.getItem("modoEspecial") === "true";
 let symbolsBase = ["🍒","🍋","🔔","💎"];
@@ -181,14 +159,8 @@ function activarModoEspecial(){
   const slot = document.getElementById("slotContainer");
   slot.classList.add("modo-especial-marco");
   slot.classList.add("luces-arcade");
-
-  audio.loop = true;
-  const playAudio = () => {
-    audio.play().catch(e => console.log("Audio bloqueado hasta interacción del usuario"));
-    document.removeEventListener("click", playAudio);
-  };
-  document.addEventListener("click", playAudio);
-
+  const audio = document.getElementById("modoMusica");
+  audio.loop=true; audio.play();
   modoEspecial = true;
   addHistorial("Modo Especial desbloqueado");
   guardar();
@@ -202,11 +174,15 @@ for(let i=0;i<3;i++){
 
 function getSymbol(){
   if(modoEspecial && Math.random()<0.05) return "⭐";
+  if(Math.random()<0.01) return "💎"; // 1% chance de Jackpot
   return symbolsBase[Math.floor(Math.random()*symbolsBase.length)];
 }
 
 function evaluate(a,b,c){
-  if(a===b && b===c){ if(a==="⭐") return 999; return 100; }
+  // Jackpot
+  if(a==="💎" && b==="💎" && c==="💎") return 1000;
+  if(a===b && b===c && a==="⭐") return 999;
+  if(a===b && b===c) return 100;
   if(a===b || b===c) return 10;
   return 0;
 }
@@ -248,19 +224,28 @@ function girarRodillos(finalSymbols){
 }
 
 document.getElementById("spinBtn").onclick=()=>{
-  if(!intentoDisponible()){ msg.innerHTML="<span class='negado'>Hoy ya usaste tu intento.</span>"; return; }
+  if(!intentoDisponible()){ msg.textContent="Hoy ya usaste tu intento."; msg.style.color="red"; return; }
   actualizarRacha();
   const a=getSymbol(), b=getSymbol(), c=getSymbol();
   girarRodillos([a,b,c]);
+  const premio=evaluate(a,b,c);
   const dado=Math.random()*100;
-  if(dado<prob){ 
-    msg.innerHTML=`<span class='permitido'>✔ Permitido (${dado.toFixed(2)} < ${prob}%)</span>`; 
+  
+  if(premio===1000){
+    msg.innerHTML = "🎉 JACKPOT! 💎💎💎";
+    msg.style.color = "gold";
+    addHistorial("JACKPOT");
+  } else if(dado<prob){ 
+    msg.textContent=`✔ Permitido (${dado.toFixed(2)} < ${prob}%)`; 
+    msg.style.color="lime";
     addHistorial("Permitido"); 
   }
   else{ 
-    msg.innerHTML=`<span class='negado'>✘ Negado (${dado.toFixed(2)} ≥ ${prob}%)</span>`; 
+    msg.textContent=`✘ Negado (${dado.toFixed(2)} ≥ ${prob}%)`; 
+    msg.style.color="red";
     addHistorial("Negado"); 
   }
+  
   prob-=10; if(prob<0)prob=0;
   ultimoDia=hoy();
   guardar(); actualizarUI();
@@ -278,7 +263,8 @@ document.getElementById("verVideoBtn").onclick = () => {
       videoVistoHoy = true;
       guardar();
       actualizarUI();
-      msg.innerHTML="<span class='permitido'>✔ Video completado (+5%)</span>";
+      msg.textContent="✔ Video completado (+5%)";
+      msg.style.color="lime";
     }
   },1000);
 };
@@ -287,12 +273,8 @@ document.getElementById("resetBtn").onclick=()=>{
   localStorage.clear(); location.reload();
 };
 
-// Reglas modal
 document.getElementById("verReglasBtn").onclick = () => {
-  document.getElementById("reglasModal").style.display = "block";
-};
-document.getElementById("cerrarReglas").onclick = () => {
-  document.getElementById("reglasModal").style.display = "none";
+  alert("🎰 Reglas del juego:\n\n- Una tirada diaria.\n- Permitido o Negado según probabilidad.\n- Ver un video no atractivo suma +5%.\n- Rachas de 5 y 10 días aumentan probabilidad.\n- 20 días desbloquean Modo Especial.\n- Jackpot: 💎💎💎");
 };
 
 function actualizarUI(){
