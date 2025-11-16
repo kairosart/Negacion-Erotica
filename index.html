@@ -1,278 +1,327 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tragaperras Animadas — Sistema Diario + Modo Especial</title>
-  <style>
-    body {
-      background: #111;
-      color: #fff;
-      font-family: system-ui;
-      padding: 20px;
-      text-align: center;
-    }
-    .card {
-      background: #222;
-      padding: 16px;
-      border-radius: 10px;
-      margin: 10px auto;
-      max-width: 600px;
-    }
-    #slotContainer {
-      padding: 20px;
-      background: #000;
-      border-radius: 12px;
-      display: inline-block;
-      margin-top: 20px;
-      position: relative;
-      overflow: hidden;
-      height: 90px;
-    }
-    .grid3 {
-      display: grid;
-      grid-template-columns: repeat(3, 80px);
-      grid-gap: 10px;
-      justify-content: center;
-      margin: 0 auto;
-    }
-    .cell {
-      width: 80px;
-      height: 80px;
-      background: #333;
-      border-radius: 8px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-size: 40px;
-      transition: transform 0.3s;
-    }
-    button {
-      padding: 10px 16px;
-      border: none;
-      border-radius: 8px;
-      background: #0af;
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-      margin: 5px;
-    }
-    button:disabled {
-      background: #555;
-      cursor: not-allowed;
-    }
-    .modo-especial-marco {
-      border: 6px solid gold;
-      box-shadow: 0 0 20px gold, 0 0 40px goldenrod;
-      animation: brilloMarco 2s infinite alternate;
-    }
-    @keyframes brilloMarco {
-      0% { box-shadow: 0 0 10px gold; }
-      100% { box-shadow: 0 0 35px rgb(255, 215, 0); }
-    }
-    .luces-arcade {
-      position: relative;
-    }
-    .luces-arcade::before,
-    .luces-arcade::after {
-      content: "";
-      position: absolute;
-      height: 8px;
-      width: 100%;
-      left: 0;
-      background: linear-gradient(90deg, red, orange, yellow, lime, cyan, blue, purple, red);
-      background-size: 400% 100%;
-      animation: lucesArcade 3s linear infinite;
-    }
-    .luces-arcade::before { top: -14px; }
-    .luces-arcade::after { bottom: -14px; }
-    @keyframes lucesArcade {
-      0% { background-position: 0%; }
-      100% { background-position: 400%; }
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tragaperras Animadas — Sistema Diario + Modo Especial</title>
+<style>
+body{
+  background:#111;
+  color:#fff;
+  font-family: system-ui;
+  padding:20px;
+  text-align:center;
+}
+.card{
+  background:#222;
+  padding:16px;
+  border-radius:10px;
+  margin:10px auto;
+  max-width:600px;
+}
+#slotContainer{
+  padding:20px;
+  background:#000;
+  border-radius:12px;
+  display:inline-block;
+  margin-top:20px;
+  position:relative;
+  overflow:hidden;
+  height:100px;
+}
+.grid3{
+  display:grid;
+  grid-template-columns:repeat(3,80px);
+  grid-gap:10px;
+  justify-content:center;
+}
+.cell{
+  width:80px;
+  height:80px;
+  background:#333;
+  border-radius:8px;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  font-size:40px;
+  transition: transform 0.3s;
+}
+button{
+  padding:10px 16px;
+  border:none;
+  border-radius:8px;
+  background:#0af;
+  color:white;
+  font-weight:bold;
+  cursor:pointer;
+  margin:5px;
+}
+button:disabled{
+  background:#555;
+  cursor:not-allowed;
+}
+.modo-especial-marco{
+  border:6px solid gold;
+  box-shadow:0 0 20px gold, 0 0 40px goldenrod;
+  animation:brilloMarco 2s infinite alternate;
+}
+@keyframes brilloMarco{
+  0%{ box-shadow:0 0 10px gold; }
+  100%{ box-shadow:0 0 35px rgb(255,215,0); }
+}
+.luces-arcade{
+  position:relative;
+}
+.luces-arcade::before,
+.luces-arcade::after{
+  content:"";
+  position:absolute;
+  height:8px;
+  width:100%;
+  left:0;
+  background:linear-gradient(
+    90deg,
+    red, orange, yellow, lime, cyan, blue, purple, red
+  );
+  background-size:400% 100%;
+  animation:lucesArcade 3s linear infinite;
+}
+.luces-arcade::before{ top:-14px; }
+.luces-arcade::after{ bottom:-14px; }
+@keyframes lucesArcade{
+  0%{ background-position:0%; }
+  100%{ background-position:400%; }
+}
+/* Popup modal */
+#popupReglas{
+  display:none;
+  position:fixed;
+  top:50%;
+  left:50%;
+  transform:translate(-50%, -50%);
+  background:#222;
+  color:#fff;
+  padding:20px;
+  border-radius:10px;
+  max-width:90%;
+  max-height:80%;
+  overflow:auto;
+  z-index:9999;
+}
+#popupFondo{
+  display:none;
+  position:fixed;
+  top:0; left:0; width:100%; height:100%;
+  background:rgba(0,0,0,0.7);
+  z-index:9998;
+}
+</style>
 </head>
 <body>
-  <h1>🎰 Negación Erótica — Sistema Diario</h1>
-  <audio id="modoMusica" src="arcade_theme.mp3"></audio>
-  <div id="slotContainer">
-    <div class="grid3" id="grid"></div>
-  </div>
-  <br>
+<h1>🎰 Negación Erótica — Sistema Diario</h1>
+<audio id="modoMusica" src="arcade_theme.mp3"></audio>
+
+<div id="slotContainer">
+  <div class="grid3" id="grid"></div>
+</div>
+<br>
+<div id="botones" style="margin-top:20px; display:flex; justify-content:center; gap:10px; flex-wrap:wrap;">
   <button id="spinBtn">🎰 Girar</button>
   <button id="verVideoBtn">🎥 Ver video no atractivo (+5%)</button>
   <button id="resetBtn">🔄 Reiniciar</button>
-  <p id="msg"></p>
-  <p id="stats"></p>
-  <p id="racha"></p>
-  <p id="prob"></p>
-  <div class="card">
-    <h3>Historial de días</h3>
-    <div id="historial"></div>
-  </div>
+  <button id="verReglasBtn">📜 Ver reglas</button>
+</div>
 
-  <script>
-    const grid = document.getElementById("grid");
-    const msg = document.getElementById("msg");
-    const stats = document.getElementById("stats");
-    const probTxt = document.getElementById("prob");
-    const rachaTxt = document.getElementById("racha");
-    const historialDiv = document.getElementById("historial");
+<p id="msg"></p>
+<p id="stats"></p>
+<p id="racha"></p>
+<p id="prob"></p>
 
-    let modoEspecial = localStorage.getItem("modoEspecial") === "true";
-    let symbolsBase = ["🍒", "🍋", "🔔", "💎"];
-    let symbolsEspecial = "⭐";
-    let prob = parseFloat(localStorage.getItem("prob")) || 50;
-    let ultimoDia = localStorage.getItem("ultimoDia") || "";
-    let racha = parseInt(localStorage.getItem("racha")) || 0;
-    let historial = JSON.parse(localStorage.getItem("historialDias") || "[]");
-    let videoVistoHoy = localStorage.getItem("videoVistoHoy") === (new Date().toISOString().split("T")[0]);
+<div class="card">
+  <h3>Historial de días</h3>
+  <div id="historial"></div>
+</div>
 
-    function hoy() { return new Date().toISOString().split("T")[0]; }
+<!-- Popup Reglas -->
+<div id="popupFondo"></div>
+<div id="popupReglas">
+  <h2>📜 Reglas del Juego</h2>
+  <p>1. Solo se puede jugar 1 vez al día.</p>
+  <p>2. Cada tirada tiene una probabilidad de permitir o negar.</p>
+  <p>3. Ver un video no atractivo aumenta +5% de probabilidad por hoy.</p>
+  <p>4. Rachas consecutivas de 5 y 10 días aumentan la probabilidad automáticamente.</p>
+  <p>5. Al llegar a 20 días consecutivos se activa el Modo Especial.</p>
+  <p>6. En Modo Especial aparece un símbolo especial (⭐) con más frecuencia.</p>
+  <button id="cerrarReglasBtn">✖ Cerrar</button>
+</div>
 
-    function guardar() {
-      localStorage.setItem("prob", prob);
-      localStorage.setItem("ultimoDia", ultimoDia);
-      localStorage.setItem("racha", racha);
-      localStorage.setItem("modoEspecial", modoEspecial);
-      localStorage.setItem("historialDias", JSON.stringify(historial));
-      localStorage.setItem("videoVistoHoy", videoVistoHoy ? hoy() : "");
+<script>
+const grid = document.getElementById("grid");
+const msg = document.getElementById("msg");
+const stats = document.getElementById("stats");
+const probTxt = document.getElementById("prob");
+const rachaTxt = document.getElementById("racha");
+const historialDiv = document.getElementById("historial");
+
+let modoEspecial = localStorage.getItem("modoEspecial") === "true";
+let symbolsBase = ["🍒","🍋","🔔","💎"];
+let symbolsEspecial = "⭐";
+let prob = parseFloat(localStorage.getItem("prob")) || 50;
+let ultimoDia = localStorage.getItem("ultimoDia") || "";
+let racha = parseInt(localStorage.getItem("racha")) || 0;
+let historial = JSON.parse(localStorage.getItem("historialDias") || "[]");
+let videoVistoHoy = localStorage.getItem("videoVistoHoy") === (new Date().toISOString().split("T")[0]);
+
+function hoy(){ return new Date().toISOString().split("T")[0]; }
+
+function guardar(){
+  localStorage.setItem("prob", prob);
+  localStorage.setItem("ultimoDia", ultimoDia);
+  localStorage.setItem("racha", racha);
+  localStorage.setItem("modoEspecial", modoEspecial);
+  localStorage.setItem("historialDias", JSON.stringify(historial));
+  localStorage.setItem("videoVistoHoy", videoVistoHoy ? hoy() : "");
+}
+
+function addHistorial(texto){
+  historial.push({fecha:hoy(), texto});
+  localStorage.setItem("historialDias", JSON.stringify(historial));
+  renderHistorial();
+}
+
+function renderHistorial(){
+  historialDiv.innerHTML = historial.map(h=>`<div>📅 ${h.fecha}: ${h.texto}</div>`).join("");
+}
+
+function activarModoEspecial(){
+  const slot = document.getElementById("slotContainer");
+  slot.classList.add("modo-especial-marco");
+  slot.classList.add("luces-arcade");
+  const audio = document.getElementById("modoMusica");
+  audio.loop=true; audio.play();
+  modoEspecial = true;
+  addHistorial("Modo Especial desbloqueado");
+  guardar();
+}
+
+if(modoEspecial) activarModoEspecial();
+
+for(let i=0;i<3;i++){
+  const c=document.createElement("div"); c.className="cell"; c.id="c"+i; grid.appendChild(c);
+}
+
+function getSymbol(){
+  if(modoEspecial && Math.random()<0.05) return "⭐";
+  return symbolsBase[Math.floor(Math.random()*symbolsBase.length)];
+}
+
+function evaluate(a,b,c){
+  if(a===b && b===c){ if(a==="⭐") return 999; return 100; }
+  if(a===b || b===c) return 10;
+  return 0;
+}
+
+function intentoDisponible(){ return ultimoDia!==hoy(); }
+
+function actualizarRacha(){
+  const ayer = new Date(); ayer.setDate(ayer.getDate()-1);
+  const ayerStr = ayer.toISOString().split("T")[0];
+  if(ultimoDia===ayerStr) racha++;
+  else { 
+    if(ultimoDia!==hoy()){ 
+      racha=0; prob-=10; if(prob<0)prob=0; addHistorial("Racha rota (–10% prob.)"); 
     }
+  }
+  if(racha===5){ prob+=5; addHistorial("+5% por 5 días consecutivos"); }
+  if(racha===10){ prob+=10; addHistorial("+10% por 10 días consecutivos"); }
+  if(racha===20 && !modoEspecial) activarModoEspecial();
+  guardar();
+}
 
-    function addHistorial(texto) {
-      historial.push({ fecha: hoy(), texto });
-      localStorage.setItem("historialDias", JSON.stringify(historial));
-      renderHistorial();
+function girarRodillos(finalSymbols){
+  const spins = 15;
+  const delay = 80;
+  let count = 0;
+  const interval = setInterval(()=>{
+    for(let i=0;i<3;i++){
+      const sym = symbolsBase[Math.floor(Math.random()*symbolsBase.length)];
+      document.getElementById("c"+i).textContent=sym;
     }
-
-    function renderHistorial() {
-      historialDiv.innerHTML = historial.map(h => `<div>📅 ${h.fecha}: ${h.texto}</div>`).join("");
+    count++;
+    if(count>=spins){
+      clearInterval(interval);
+      for(let i=0;i<3;i++){
+        document.getElementById("c"+i).textContent=finalSymbols[i];
+      }
     }
+  },delay);
+}
 
-    function activarModoEspecial() {
-      const slot = document.getElementById("slotContainer");
-      slot.classList.add("modo-especial-marco");
-      slot.classList.add("luces-arcade");
-      const audio = document.getElementById("modoMusica");
-      audio.loop = true; audio.play();
-      modoEspecial = true;
-      addHistorial("Modo Especial desbloqueado");
+document.getElementById("spinBtn").onclick=()=>{
+  if(!intentoDisponible()){ msg.textContent="Hoy ya usaste tu intento."; return; }
+  actualizarRacha();
+  const a=getSymbol(), b=getSymbol(), c=getSymbol();
+  girarRodillos([a,b,c]);
+  const premio=evaluate(a,b,c);
+  const dado=Math.random()*100;
+  if(dado<prob){ 
+    msg.textContent=`✔ Permitido (${dado.toFixed(2)} < ${prob}%)`; 
+    addHistorial("Permitido"); 
+  }
+  else{ 
+    msg.textContent=`✘ Negado (${dado.toFixed(2)} ≥ ${prob}%)`; 
+    addHistorial("Negado"); 
+  }
+  prob-=10; if(prob<0)prob=0;
+  ultimoDia=hoy();
+  guardar(); actualizarUI();
+};
+
+document.getElementById("verVideoBtn").onclick = () => {
+  if(videoVistoHoy){ alert("Ya viste tu video hoy."); return; }
+  const videoURL = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
+  const videoWindow = window.open(videoURL,"Video","width=800,height=450");
+  const checkClosed = setInterval(() => {
+    if(videoWindow.closed){
+      clearInterval(checkClosed);
+      prob +=5; if(prob>100) prob=100;
+      addHistorial("+5% por ver video no atractivo");
+      videoVistoHoy = true;
       guardar();
+      actualizarUI();
+      msg.textContent="✔ Video completado (+5%)";
     }
+  },1000);
+};
 
-    if (modoEspecial) activarModoEspecial();
+document.getElementById("resetBtn").onclick=()=>{
+  localStorage.clear(); location.reload();
+};
 
-    // Crear rodillos
-    for (let i = 0; i < 3; i++) {
-      const c = document.createElement("div");
-      c.className = "cell";
-      c.id = "c" + i;
-      grid.appendChild(c);
-    }
+function actualizarUI(){
+  stats.textContent=`Ultimo día jugado: ${ultimoDia}`;
+  probTxt.textContent=`Probabilidad actual: ${prob}%`;
+  rachaTxt.textContent=`Racha: ${racha} días`;
+}
 
-    function getSymbol() {
-      if (modoEspecial && Math.random() < 0.05) return "⭐";
-      return symbolsBase[Math.floor(Math.random() * symbolsBase.length)];
-    }
+renderHistorial();
+actualizarUI();
 
-    function evaluate(a, b, c) {
-      if (a === b && b === c) { if (a === "⭐") return 999; return 100; }
-      if (a === b || b === c) return 10;
-      return 0;
-    }
-
-    function intentoDisponible() {
-      // Si es el primer intento del día, se debe permitir
-      if (!ultimoDia || ultimoDia !== hoy()) {
-        return true;
-      }
-      return false;
-    }
-
-    function actualizarRacha() {
-      const ayer = new Date(); ayer.setDate(ayer.getDate() - 1);
-      const ayerStr = ayer.toISOString().split("T")[0];
-      if (ultimoDia === ayerStr) racha++;
-      else {
-        if (ultimoDia !== hoy()) {
-          racha = 0; prob -= 10; if (prob < 0) prob = 0; addHistorial("Racha rota (–10% prob.)");
-        }
-      }
-      if (racha === 5) { prob += 5; addHistorial("+5% por 5 días consecutivos"); }
-      if (racha === 10) { prob += 10; addHistorial("+10% por 10 días consecutivos"); }
-      if (racha === 20 && !modoEspecial) activarModoEspecial();
-      guardar();
-    }
-
-    function girarRodillos(finalSymbols) {
-      const spins = 15;
-      const delay = 80;
-      let count = 0;
-      const interval = setInterval(() => {
-        for (let i = 0; i < 3; i++) {
-          const sym = symbolsBase[Math.floor(Math.random() * symbolsBase.length)];
-          document.getElementById("c" + i).textContent = sym;
-        }
-        count++;
-        if (count >= spins) {
-          clearInterval(interval);
-          for (let i = 0; i < 3; i++) {
-            document.getElementById("c" + i).textContent = finalSymbols[i];
-          }
-        }
-      }, delay);
-    }
-
-    document.getElementById("spinBtn").onclick = () => {
-      if (!intentoDisponible()) { msg.textContent = "Hoy ya usaste tu intento."; return; }
-      actualizarRacha();
-      const a = getSymbol(), b = getSymbol(), c = getSymbol();
-      girarRodillos([a, b, c]);
-      const premio = evaluate(a, b, c);
-      const dado = Math.random() * 100;
-      if (dado <= prob) {
-        msg.textContent = `✔ Permitido (${dado.toFixed(2)} < ${prob}%)`;
-        addHistorial("Permitido");
-      }
-      else {
-        msg.textContent = `✘ Negado (${dado.toFixed(2)} ≥ ${prob}%)`;
-        addHistorial("Negado");
-      }
-      prob -= 10; if (prob < 0) prob = 0;
-      ultimoDia = hoy();
-      guardar(); actualizarUI();
-    };
-
-    document.getElementById("verVideoBtn").onclick = () => {
-      if (videoVistoHoy) { alert("Ya viste tu video hoy."); return; }
-      const videoURL = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
-      const videoWindow = window.open(videoURL, "Video", "width=800,height=450");
-      const checkClosed = setInterval(() => {
-        if (videoWindow.closed) {
-          clearInterval(checkClosed);
-          prob += 5; if (prob > 100) prob = 100;
-          addHistorial("+5% por ver video no atractivo");
-          videoVistoHoy = true;
-          guardar();
-          actualizarUI();
-          msg.textContent = "✔ Video completado (+5%)";
-        }
-      }, 1000);
-    };
-
-    document.getElementById("resetBtn").onclick = () => {
-      localStorage.clear();
-      location.reload();
-    };
-
-    function actualizarUI() {
-      stats.textContent = `Ultimo día jugado: ${ultimoDia}`;
-      probTxt.textContent = `Probabilidad actual: ${prob}%`;
-      rachaTxt.textContent = `Racha: ${racha} días`;
-    }
-
-    renderHistorial();
-    actualizarUI();
-  </script>
+// Popup Reglas
+const popup = document.getElementById("popupReglas");
+const popupFondo = document.getElementById("popupFondo");
+document.getElementById("verReglasBtn").onclick = () => {
+  popup.style.display = "block";
+  popupFondo.style.display = "block";
+};
+document.getElementById("cerrarReglasBtn").onclick = () => {
+  popup.style.display = "none";
+  popupFondo.style.display = "none";
+};
+popupFondo.onclick = () => {
+  popup.style.display = "none";
+  popupFondo.style.display = "none";
+};
+</script>
 </body>
 </html>
