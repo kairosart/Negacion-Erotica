@@ -100,11 +100,10 @@ function actualizarRacha(){
   const ayer = new Date(); ayer.setDate(ayer.getDate()-1);
   const ayerStr = ayer.toISOString().split("T")[0];
   if(ultimoDia===ayerStr) racha++;
-  else if(ultimoDia!==hoy()){ racha=0; prob-=5; if(prob<0)prob=0; addHistorial("Racha rota (–5% prob.)"); }
-  if(racha===5){ prob+=3; addHistorial("+3% por 5 días consecutivos"); }
-  if(racha===10){ prob+=6; addHistorial("+6% por 10 días consecutivos"); }
+  else if(ultimoDia!==hoy()){ racha=0; prob-=10; if(prob<0)prob=0; addHistorial("Racha rota (–10% prob.)"); }
+  if(racha===5){ prob+=5; addHistorial("+5% por 5 días consecutivos"); }
+  if(racha===10){ prob+=10; addHistorial("+10% por 10 días consecutivos"); }
   if(racha>=20 && !modoEspecial) activarModoEspecial();
-  if(prob>100) prob=100;
   guardar();
 }
 function activarModoEspecial(){
@@ -114,4 +113,68 @@ function activarModoEspecial(){
 }
 function getSymbol(){ return modoEspecial && Math.random()<0.05?"⭐":symbolsBase[Math.floor(Math.random()*symbolsBase.length)]; }
 function girarRodillos(finalSymbols){
-  let spins=15, count=0
+  let spins=15, count=0;
+  let interval = setInterval(()=>{
+    cells.forEach(c=>c.textContent=symbolsBase[Math.floor(Math.random()*symbolsBase.length)]);
+    count++;
+    if(count>=spins){ clearInterval(interval); cells.forEach((c,i)=>c.textContent=finalSymbols[i]); }
+  },80);
+}
+function actualizarUI(){ stats.textContent=`Ultimo día jugado: ${ultimoDia}`; rachaTxt.textContent=`Racha: ${racha} días`; }
+
+document.getElementById("spinBtn").onclick=()=>{
+  if(!intentoDisponible()){ msg.innerHTML="<span class='negado'>Hoy ya usaste tu intento.</span>"; return; }
+  actualizarRacha();
+  let symbols = [getSymbol(),getSymbol(),getSymbol()];
+  girarRodillos(symbols);
+  let dado=Math.random()*100;
+  if(dado<prob){ msg.innerHTML=`<span class='permitido'>✔ Permitido (${dado.toFixed(2)} < ${prob}%)</span>`; addHistorial("Permitido"); }
+  else{ msg.innerHTML=`<span class='negado'>✘ Negado (${dado.toFixed(2)} ≥ ${prob}%)</span>`; addHistorial("Negado"); }
+  prob-=10; if(prob<0)prob=0;
+  ultimoDia=hoy();
+  guardar(); actualizarUI();
+};
+
+document.getElementById("verVideoBtn").onclick=()=>{
+  if(videoVistoHoy){ alert("Ya viste tu video hoy."); return; }
+  const videoWindow = window.open("https://www.youtube.com/watch?v=dQw4w9WgXcQ","Video","width=800,height=450");
+  const checkClosed = setInterval(()=>{
+    if(videoWindow.closed){ clearInterval(checkClosed); prob+=5; if(prob>100)prob=100; videoVistoHoy=true; guardar(); actualizarUI(); addHistorial("+5% por video completado"); msg.innerHTML="<span class='permitido'>✔ Video completado (+5%)</span>"; }
+  },1000);
+};
+
+document.getElementById("verReglasBtn").onclick=()=>{ alert(`Reglas:\n1️⃣ Solo un intento por día.\n2️⃣ Video aumenta probabilidad +5%.\n3️⃣ Rachas: 5 días +5%, 10 días +10%, 20 días desbloquea Modo Especial.\n4️⃣ Jackpot: tres ⭐\n5️⃣ Probabilidad máxima 100%`); };
+
+document.getElementById("playAudioBtn").onclick=()=>{ document.getElementById("audioFondo").play(); };
+
+document.getElementById("simularBtn").onclick=()=>{
+  const tiradas=100000; let permitido=0, negado=0, jackpots=0, rachaSim=0, maxRachaSim=0, probSim=50;
+  let combos={}, probHistory=[];
+  for(let i=0;i<tiradas;i++){
+    let a=symbolsBase[Math.floor(Math.random()*4)], b=symbolsBase[Math.floor(Math.random()*4)], c=symbolsBase[Math.floor(Math.random()*4)];
+    if(Math.random()<0.05){ a=b=c="⭐"; jackpots++; }
+    combos[a+b+c]=(combos[a+b+c]||0)+1;
+    let dado=Math.random()*100;
+    if(dado<probSim){ permitido++; rachaSim++; } else { negado++; if(rachaSim>maxRachaSim) maxRachaSim=rachaSim; rachaSim=0; probSim-=10; if(probSim<0)probSim=0; }
+    if(rachaSim===5) probSim+=5; if(rachaSim===10) probSim+=10; if(rachaSim>=20) probSim+=15; if(probSim>100)probSim=100;
+    probHistory.push(probSim);
+  } if(rachaSim>maxRachaSim) maxRachaSim=rachaSim;
+
+  addHistorial(`Simulación ${tiradas} tiradas: Permitido ${permitido}, Negado ${negado}, Jackpots ${jackpots}, Racha máxima ${maxRachaSim}, Prob final ${probSim.toFixed(2)}%`);
+
+  // Gráfico combinaciones top10
+  const ctx = document.getElementById("histogramCanvas").getContext("2d");
+  const top10 = Object.entries(combos).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  new Chart(ctx,{type:'bar', data:{labels:top10.map(e=>e[0]), datasets:[{label:'Frecuencia', data:top10.map(e=>e[1]), backgroundColor:'lime'}]}, options:{responsive:true, plugins:{legend:{display:false}}}});
+
+  // Gráfico evolución probabilidad
+  const ctx2 = document.getElementById("probabilidadCanvas").getContext("2d");
+  const sampledProb = probHistory.filter((_,i)=>i%1000===0);
+  new Chart(ctx2,{type:'line', data:{labels:sampledProb.map((_,i)=>i*1000), datasets:[{label:'Probabilidad', data:sampledProb, borderColor:'yellow', backgroundColor:'transparent'}]}, options:{responsive:true, plugins:{legend:{display:false}}}});
+};
+
+renderHistorial();
+actualizarUI();
+</script>
+</body>
+</html>
