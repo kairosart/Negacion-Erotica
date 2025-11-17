@@ -4,7 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Tragaperras Negación Erótica — GitHub Pages</title>
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <style>
 body{
   background:#111; color:#fff; font-family:system-ui; text-align:center; padding:20px;
@@ -17,21 +19,63 @@ button:disabled{background:#555; cursor:not-allowed;}
   display:flex; justify-content:center; margin-top:20px;
 }
 .cell{
-  width:80px; height:80px; background:#222; border-radius:8px; margin:0 5px; display:flex; justify-content:center; align-items:center; font-size:40px; transition: transform 0.3s;
+  width:80px; height:80px; background:#222; border-radius:8px; margin:0 5px;
+  display:flex; justify-content:center; align-items:center;
+  font-size:40px; transition: transform 0.3s;
 }
+
+/* Marco especial */
 .modo-especial-marco{
   border:6px solid gold; box-shadow:0 0 20px gold,0 0 40px goldenrod; animation:brilloMarco 2s infinite alternate;
 }
 @keyframes brilloMarco{
   0%{ box-shadow:0 0 10px gold; } 100%{ box-shadow:0 0 35px gold; }
 }
-.permitido{color:limegreen; font-weight:bold;}
-.negado{color:red; font-weight:bold;}
-.card{background:#222; padding:16px; border-radius:10px; margin:10px auto; max-width:600px;}
-canvas{background:#111; margin-top:10px; border-radius:8px;}
+
+/* Tarjetas */
+.card{
+  background:#222; padding:16px; border-radius:10px;
+  margin:10px auto; max-width:600px;
+}
+canvas{
+  background:#111; margin-top:10px; border-radius:8px;
+}
+
+/* --- NUEVO HISTORIAL MEGA AVANZADO --- */
+
+.hist-item {
+  margin: 12px 0;
+  padding: 14px 18px;
+  border-radius: 12px;
+  font-size: 15px;
+  display: flex;
+  flex-direction: column;
+  width: 94%;
+  margin-left: auto;
+  margin-right: auto;
+  opacity: 0;
+  transform: translateY(12px);
+  animation: showHist 0.4s forwards ease-out;
+}
+
+.hist-win { background: rgba(0,255,120,0.18); border-left: 4px solid #0f0; }
+.hist-lose { background: rgba(255,0,0,0.25); border-left: 4px solid #f44; }
+.hist-info { background: rgba(0,150,255,0.25); border-left: 4px solid #09f; }
+
+.hist-title {
+  font-weight: bold;
+  margin-bottom: 5px;
+  font-size: 16px;
+}
+
+@keyframes showHist {
+  to { opacity:1; transform:translateY(0); }
+}
 </style>
 </head>
+
 <body>
+
 <h1>🎰 Negación Erótica</h1>
 
 <audio id="audioFondo" src="arcade_theme.mp3" loop></audio>
@@ -44,10 +88,13 @@ canvas{background:#111; margin-top:10px; border-radius:8px;}
 </div>
 
 <br>
+
 <button id="spinBtn">🎰 Girar</button>
 <button id="verVideoBtn">🎥 Ver video no atractivo (+5%)</button>
 <button id="verReglasBtn">📜 Ver Reglas</button>
-<button id="simularBtn">🧪 Simular 100,000 tiradas</button>
+<button id="simularBtn">🧪 Simular 365 días</button>
+<button id="reiniciarBtn">🔄 Reiniciar</button>
+
 <p id="msg"></p>
 <p id="stats"></p>
 <p id="racha"></p>
@@ -64,117 +111,317 @@ canvas{background:#111; margin-top:10px; border-radius:8px;}
 <canvas id="probabilidadCanvas" width="600" height="150"></canvas>
 
 <script>
-const cells = [0,1,2].map(i=>document.getElementById("c"+i));
-const msg = document.getElementById("msg");
-const stats = document.getElementById("stats");
-const rachaTxt = document.getElementById("racha");
+
+/* =========================================================
+   VARIABLES PRINCIPALES
+========================================================= */
+
+const cells = [0,1,2].map(i => document.getElementById("c"+i));
 const historialDiv = document.getElementById("historial");
 
 let symbolsBase = ["🍒","🍋","🔔","💎"];
-let prob = parseFloat(localStorage.getItem("prob"))||50;
-let ultimoDia = localStorage.getItem("ultimoDia")||"";
-let racha = parseInt(localStorage.getItem("racha"))||0;
-let historial = JSON.parse(localStorage.getItem("historialDias")||"[]");
-let videoVistoHoy = localStorage.getItem("videoVistoHoy")===new Date().toISOString().split("T")[0];
-let modoEspecial = localStorage.getItem("modoEspecial")==="true";
+
+let prob = parseFloat(localStorage.getItem("prob")) || 30;
+let ultimoDia = localStorage.getItem("ultimoDia") || "";
+let racha = parseInt(localStorage.getItem("racha")) || 0;
+let historial = JSON.parse(localStorage.getItem("historialDias") || "[]");
+let modoEspecial = localStorage.getItem("modoEspecial") === "true";
+
+let probHistorial = JSON.parse(localStorage.getItem("probHistorial") || "[]");
+let combinaciones = JSON.parse(localStorage.getItem("combinaciones") || "{}");
+
+/* =========================================================
+   HELPERS
+========================================================= */
 
 function hoy(){ return new Date().toISOString().split("T")[0]; }
-function guardar(){ 
+
+function guardar(){
   localStorage.setItem("prob", prob);
   localStorage.setItem("ultimoDia", ultimoDia);
   localStorage.setItem("racha", racha);
   localStorage.setItem("modoEspecial", modoEspecial);
   localStorage.setItem("historialDias", JSON.stringify(historial));
-  localStorage.setItem("videoVistoHoy", videoVistoHoy?hoy():"");
+  localStorage.setItem("probHistorial", JSON.stringify(probHistorial));
+  localStorage.setItem("combinaciones", JSON.stringify(combinaciones));
 }
-function addHistorial(texto){
-  historial.push({fecha:hoy(), texto});
-  guardar();
+
+/* =========================================================
+   HISTORIAL MEGA AVANZADO
+========================================================= */
+
+function addHistorial(texto, tipo="info", data={}){
+  const fecha = hoy();
+  const iconos = {
+    win:"🏆",
+    lose:"❌",
+    info:"🔵",
+    video:"🎥",
+    sim:"🧪",
+    reset:"🔄"
+  };
+
+  const icono = iconos[tipo] || "🔵";
+
+  const detallesHTML = `
+    <div><strong>Prob antes:</strong> ${data.probAntes ?? "?"}%</div>
+    <div><strong>Prob después:</strong> ${data.probDespues ?? "?"}%</div>
+    <div><strong>Racha:</strong> ${data.racha ?? "?"} días</div>
+    <div><strong>Modo especial:</strong> ${data.modoEspecial ? "✨ Sí" : "No"}</div>
+  `;
+
+  historial.push({
+    fecha,
+    texto:`${icono} ${texto}`,
+    tipo,
+    detalles:detallesHTML
+  });
+
   renderHistorial();
-}
-function renderHistorial(){
-  historialDiv.innerHTML = historial.map(h=>`<div>📅 ${h.fecha}: ${h.texto}</div>`).join("");
-}
-function intentoDisponible(){ return ultimoDia!==hoy(); }
-function actualizarRacha(){
-  const ayer = new Date(); ayer.setDate(ayer.getDate()-1);
-  const ayerStr = ayer.toISOString().split("T")[0];
-  if(ultimoDia===ayerStr) racha++;
-  else if(ultimoDia!==hoy()){ racha=0; prob-=10; if(prob<0)prob=0; addHistorial("Racha rota (–10% prob.)"); }
-  if(racha===5){ prob+=5; addHistorial("+5% por 5 días consecutivos"); }
-  if(racha===10){ prob+=10; addHistorial("+10% por 10 días consecutivos"); }
-  if(racha>=20 && !modoEspecial) activarModoEspecial();
   guardar();
 }
-function activarModoEspecial(){
-  document.getElementById("slotContainer").classList.add("modo-especial-marco");
-  modoEspecial=true;
-  addHistorial("Modo Especial desbloqueado");
+
+function renderHistorial(){
+  historialDiv.innerHTML = historial.map(h=>`
+    <div class="hist-item hist-${h.tipo}">
+      <div class="hist-title">${h.texto}</div>
+      <div>📅 ${h.fecha}</div>
+      ${h.detalles}
+    </div>
+  `).join("");
 }
-function getSymbol(){ return modoEspecial && Math.random()<0.05?"⭐":symbolsBase[Math.floor(Math.random()*symbolsBase.length)]; }
-function girarRodillos(finalSymbols){
-  let spins=15, count=0;
-  let interval = setInterval(()=>{
-    cells.forEach(c=>c.textContent=symbolsBase[Math.floor(Math.random()*symbolsBase.length)]);
-    count++;
-    if(count>=spins){ clearInterval(interval); cells.forEach((c,i)=>c.textContent=finalSymbols[i]); }
-  },80);
-}
-function actualizarUI(){ stats.textContent=`Ultimo día jugado: ${ultimoDia}`; rachaTxt.textContent=`Racha: ${racha} días`; }
-
-document.getElementById("spinBtn").onclick=()=>{
-  if(!intentoDisponible()){ msg.innerHTML="<span class='negado'>Hoy ya usaste tu intento.</span>"; return; }
-  actualizarRacha();
-  let symbols = [getSymbol(),getSymbol(),getSymbol()];
-  girarRodillos(symbols);
-  let dado=Math.random()*100;
-  if(dado<prob){ msg.innerHTML=`<span class='permitido'>✔ Permitido (${dado.toFixed(2)} < ${prob}%)</span>`; addHistorial("Permitido"); }
-  else{ msg.innerHTML=`<span class='negado'>✘ Negado (${dado.toFixed(2)} ≥ ${prob}%)</span>`; addHistorial("Negado"); }
-  prob-=10; if(prob<0)prob=0;
-  ultimoDia=hoy();
-  guardar(); actualizarUI();
-};
-
-document.getElementById("verVideoBtn").onclick=()=>{
-  if(videoVistoHoy){ alert("Ya viste tu video hoy."); return; }
-  const videoWindow = window.open("https://www.youtube.com/watch?v=dQw4w9WgXcQ","Video","width=800,height=450");
-  const checkClosed = setInterval(()=>{
-    if(videoWindow.closed){ clearInterval(checkClosed); prob+=5; if(prob>100)prob=100; videoVistoHoy=true; guardar(); actualizarUI(); addHistorial("+5% por video completado"); msg.innerHTML="<span class='permitido'>✔ Video completado (+5%)</span>"; }
-  },1000);
-};
-
-document.getElementById("verReglasBtn").onclick=()=>{ alert(`Reglas:\n1️⃣ Solo un intento por día.\n2️⃣ Video aumenta probabilidad +5%.\n3️⃣ Rachas: 5 días +5%, 10 días +10%, 20 días desbloquea Modo Especial.\n4️⃣ Jackpot: tres ⭐\n5️⃣ Probabilidad máxima 100%`); };
-
-document.getElementById("playAudioBtn").onclick=()=>{ document.getElementById("audioFondo").play(); };
-
-document.getElementById("simularBtn").onclick=()=>{
-  const tiradas=100000; let permitido=0, negado=0, jackpots=0, rachaSim=0, maxRachaSim=0, probSim=50;
-  let combos={}, probHistory=[];
-  for(let i=0;i<tiradas;i++){
-    let a=symbolsBase[Math.floor(Math.random()*4)], b=symbolsBase[Math.floor(Math.random()*4)], c=symbolsBase[Math.floor(Math.random()*4)];
-    if(Math.random()<0.05){ a=b=c="⭐"; jackpots++; }
-    combos[a+b+c]=(combos[a+b+c]||0)+1;
-    let dado=Math.random()*100;
-    if(dado<probSim){ permitido++; rachaSim++; } else { negado++; if(rachaSim>maxRachaSim) maxRachaSim=rachaSim; rachaSim=0; probSim-=10; if(probSim<0)probSim=0; }
-    if(rachaSim===5) probSim+=5; if(rachaSim===10) probSim+=10; if(rachaSim>=20) probSim+=15; if(probSim>100)probSim=100;
-    probHistory.push(probSim);
-  } if(rachaSim>maxRachaSim) maxRachaSim=rachaSim;
-
-  addHistorial(`Simulación ${tiradas} tiradas: Permitido ${permitido}, Negado ${negado}, Jackpots ${jackpots}, Racha máxima ${maxRachaSim}, Prob final ${probSim.toFixed(2)}%`);
-
-  // Gráfico combinaciones top10
-  const ctx = document.getElementById("histogramCanvas").getContext("2d");
-  const top10 = Object.entries(combos).sort((a,b)=>b[1]-a[1]).slice(0,10);
-  new Chart(ctx,{type:'bar', data:{labels:top10.map(e=>e[0]), datasets:[{label:'Frecuencia', data:top10.map(e=>e[1]), backgroundColor:'lime'}]}, options:{responsive:true, plugins:{legend:{display:false}}}});
-
-  // Gráfico evolución probabilidad
-  const ctx2 = document.getElementById("probabilidadCanvas").getContext("2d");
-  const sampledProb = probHistory.filter((_,i)=>i%1000===0);
-  new Chart(ctx2,{type:'line', data:{labels:sampledProb.map((_,i)=>i*1000), datasets:[{label:'Probabilidad', data:sampledProb, borderColor:'yellow', backgroundColor:'transparent'}]}, options:{responsive:true, plugins:{legend:{display:false}}}});
-};
 
 renderHistorial();
-actualizarUI();
+
+/* =========================================================
+   GRÁFICOS
+========================================================= */
+
+let histChart, probChart;
+
+function actualizarGraficoHistograma(){
+  const ctx=document.getElementById("histogramCanvas").getContext("2d");
+  let entradas=Object.entries(combinaciones).sort((a,b)=>b[1]-a[1]);
+  let top10=entradas.slice(0,10);
+  let labels=top10.map(e=>e[0]);
+  let data=top10.map(e=>e[1]);
+
+  if(histChart) histChart.destroy();
+  histChart = new Chart(ctx,{
+    type:"bar",
+    data:{ labels, datasets:[{label:"Frecuencia", data, backgroundColor:"#0af"}] }
+  });
+}
+
+function actualizarGraficoProbabilidad(){
+  const ctx=document.getElementById("probabilidadCanvas").getContext("2d");
+  if(probChart) probChart.destroy();
+  probChart = new Chart(ctx,{
+    type:"line",
+    data:{
+      labels: probHistorial.map((_,i)=>i),
+      datasets:[{label:"Probabilidad (%)", data:probHistorial, borderColor:"#0af", fill:false}]
+    }
+  });
+}
+
+actualizarGraficoHistograma();
+actualizarGraficoProbabilidad();
+
+/* =========================================================
+   SLOT
+========================================================= */
+
+function getSymbol(){
+  if(modoEspecial && Math.random()<0.05) return "⭐";
+  return symbolsBase[Math.floor(Math.random()*symbolsBase.length)];
+}
+
+function girarRodillos(finalSymbols){
+  let spins=15, count=0;
+  const interval=setInterval(()=>{
+    cells.forEach(c=>c.textContent=getSymbol());
+    count++;
+    if(count>=spins){
+      clearInterval(interval);
+      cells.forEach((c,i)=>c.textContent=finalSymbols[i]);
+    }
+  },80);
+}
+
+/* =========================================================
+   BOTÓN: GIRAR
+========================================================= */
+
+document.getElementById("spinBtn").addEventListener("click",()=>{
+
+  const probAntes = prob;
+
+  let s1=getSymbol(), s2=getSymbol(), s3=getSymbol();
+  girarRodillos([s1,s2,s3]);
+  const combo=s1+s2+s3;
+  const gano=(s1===s2 && s2===s3);
+
+  combinaciones[combo]=(combinaciones[combo]||0)+1;
+
+  if(gano) prob+=0.2;
+  else prob-=0.05;
+
+  if(prob<0) prob=0;
+  if(prob>100) prob=100;
+
+  probHistorial.push(prob);
+
+  if(ultimoDia!==hoy()){
+    racha++;
+    ultimoDia=hoy();
+  }
+
+  /* === RACHAS MEJORADAS === */
+  if(racha===5) prob+=8;
+  if(racha===10) prob+=15;
+  if(racha>=20) modoEspecial=true;
+
+  /* === Historial de tirada === */
+  addHistorial(
+    "Tirada: "+combo+(gano?" — ¡GANASTE!":" — Perdiste"),
+    gano?"win":"lose",
+    {
+      probAntes: probAntes.toFixed(2),
+      probDespues: prob.toFixed(2),
+      racha,
+      modoEspecial
+    }
+  );
+
+  guardar();
+  actualizarGraficoHistograma();
+  actualizarGraficoProbabilidad();
+});
+
+/* =========================================================
+   BOTÓN: VIDEO
+========================================================= */
+
+document.getElementById("verVideoBtn").addEventListener("click",()=>{
+  const antes = prob;
+  prob+=5; if(prob>100) prob=100;
+
+  addHistorial("Video visto (+5%)","video",{
+    probAntes: antes.toFixed(2),
+    probDespues: prob.toFixed(2),
+    racha,
+    modoEspecial
+  });
+
+  probHistorial.push(prob);
+  guardar();
+  actualizarGraficoProbabilidad();
+});
+
+/* =========================================================
+   BOTÓN: REGLAS
+========================================================= */
+
+document.getElementById("verReglasBtn").addEventListener("click",()=>{
+  alert("Reglas:\n- 1 tirada por día\n- Racha 5 días: +8%\n- Racha 10 días: +15%\n- Racha 20: modo especial\n- Modo especial: ⭐ aparece 5% de las veces");
+});
+
+/* =========================================================
+   SIMULACIÓN
+========================================================= */
+
+document.getElementById("simularBtn").addEventListener("click",()=>{
+
+  const DIAS=365;
+  let probLocal=prob;
+  let rachaLocal=racha;
+  let modoEspLocal=modoEspecial;
+  let resultados={...combinaciones};
+  let probEvol=[...probHistorial];
+  let ultimoDiaSim=0;
+
+  for(let dia=1; dia<=DIAS; dia++){
+    const s1=getSymbol(), s2=getSymbol(), s3=getSymbol();
+    const combo=s1+s2+s3;
+    resultados[combo]=(resultados[combo]||0)+1;
+
+    const gano=(s1===s2&&s2===s3);
+
+    if(gano) probLocal+=0.2;
+    else probLocal-=0.05;
+
+    if(probLocal<0) probLocal=0;
+    if(probLocal>100) probLocal=100;
+
+    if(dia===ultimoDiaSim+1) rachaLocal++;
+    else rachaLocal=0;
+
+    ultimoDiaSim=dia;
+
+    if(rachaLocal===5) probLocal+=8;
+    if(rachaLocal===10) probLocal+=15;
+    if(rachaLocal>=20) modoEspLocal=true;
+
+    probEvol.push(probLocal);
+  }
+
+  prob=probLocal;
+  racha=rachaLocal;
+  modoEspecial=modoEspLocal;
+  combinaciones=resultados;
+  probHistorial=probEvol;
+
+  addHistorial("Simulación 365 días completada","sim",{
+    probAntes:"?",
+    probDespues:prob.toFixed(2),
+    racha,
+    modoEspecial
+  });
+
+  guardar();
+  actualizarGraficoProbabilidad();
+  actualizarGraficoHistograma();
+});
+
+/* =========================================================
+   BOTÓN: REINICIAR
+========================================================= */
+
+document.getElementById("reiniciarBtn").addEventListener("click",()=>{
+  if(!confirm("¿Seguro que quieres reiniciar el juego completo?")) return;
+
+  prob=30;
+  racha=0;
+  modoEspecial=false;
+  historial=[];
+  combinaciones={};
+  probHistorial=[];
+  ultimoDia="";
+
+  localStorage.clear();
+
+  addHistorial("Juego reiniciado","reset",{
+    probAntes:"?",
+    probDespues:"30",
+    racha:0,
+    modoEspecial:false
+  });
+
+  renderHistorial();
+  actualizarGraficoProbabilidad();
+  actualizarGraficoHistograma();
+});
+
+/* =========================================================
+   AUDIO
+========================================================= */
+
+document.getElementById("playAudioBtn").addEventListener("click",()=>{
+  document.getElementById("audioFondo").play();
+});
+
 </script>
+
 </body>
 </html>
