@@ -3,423 +3,301 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Tragaperras Negación Erótica — GitHub Pages</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<title>🎰 Negación Erótica</title>
 <style>
+  /* Modo oscuro y estilos generales */
   body {
-    background: #111;
-    color: #fff;
-    font-family: system-ui;
-    text-align: center;
-    padding: 20px;
-  }
-  button {
-    padding: 10px 16px;
-    margin: 5px;
-    border: none;
-    border-radius: 8px;
-    background: #0af;
-    color: #fff;
-    font-weight: bold;
-    cursor: pointer;
-  }
-  button:disabled {
-    background: #555;
-    cursor: not-allowed;
-  }
-  #slotContainer {
-    display: flex;
-    justify-content: center;
-    margin-top: 20px;
-  }
-  .cell {
-    width: 80px;
-    height: 80px;
-    background: #222;
-    border-radius: 8px;
-    margin: 0 5px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 40px;
-    transition: transform 0.3s;
-  }
-  .modo-especial-marco {
-    border: 6px solid gold;
-    box-shadow: 0 0 20px gold, 0 0 40px goldenrod;
-    animation: brilloMarco 2s infinite alternate;
-  }
-  @keyframes brilloMarco {
-    0% {
-      box-shadow: 0 0 10px gold;
-    }
-    100% {
-      box-shadow: 0 0 35px gold;
-    }
-  }
-  .card {
-    background: #222;
-    padding: 16px;
-    border-radius: 10px;
-    margin: 10px auto;
-    max-width: 600px;
-  }
-  canvas {
-    background: #111;
-    margin-top: 10px;
-    border-radius: 8px;
-  }
-  table {
-    margin: 10px auto;
-    border-collapse: collapse;
-  }
-  th,
-  td {
-    border: 1px solid #0af;
-    padding: 6px 10px;
-  }
-  th {
-    background: #0af;
-    color: #111;
-  }
-  /* Nuevo estilo para estado e historial */
-  #estadoJuego {
-    margin-bottom: 20px;
-    max-width: 600px;
-    margin-left: auto;
-    margin-right: auto;
-    color: #fff;
-    font-family: monospace, monospace;
-    text-align: left;
-  }
-  #msgIntento {
-    color: red;
-    font-weight: bold;
-    font-size: 1.1em;
-    margin-bottom: 8px;
-    text-align: center;
-  }
-  #historialBox {
-    background: #222;
-    padding: 10px;
-    border-radius: 10px;
-    font-size: 14px;
+    background-color: #121212;
     color: #eee;
-    max-height: 180px;
-    overflow-y: auto;
-  }
-  #historialBox h3 {
-    margin-top: 0;
-    font-weight: bold;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 20px;
     text-align: center;
   }
-  #historialDetalles div {
-    margin: 4px 0;
+  h1 {
+    font-weight: 900;
+    font-size: 2.5rem;
   }
+  h1 span {
+    font-size: 3rem;
+    margin-right: 8px;
+  }
+  #mensajeError {
+    color: #ff2c2c;
+    font-weight: 700;
+    margin: 10px 0 20px 0;
+    font-size: 1.2rem;
+  }
+
+  #info {
+    margin-bottom: 20px;
+    font-size: 1.1rem;
+  }
+
+  #historial {
+    background-color: #1f1f1f;
+    border-radius: 8px;
+    padding: 15px;
+    max-height: 200px;
+    overflow-y: auto;
+    text-align: left;
+    font-family: monospace;
+    margin-bottom: 25px;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+  }
+  #historial div {
+    margin-bottom: 5px;
+  }
+  .premio-especial {
+    color: gold;
+    font-weight: 700;
+  }
+
+  #simbolos {
+    margin: 25px 0;
+  }
+  #simbolos > button {
+    font-size: 3rem;
+    background: #222;
+    border: none;
+    margin: 0 12px;
+    padding: 15px 25px;
+    border-radius: 12px;
+    color: white;
+    cursor: default;
+    user-select: none;
+  }
+
+  /* Botones azules grandes */
+  .btn {
+    background-color: #009cff;
+    border: none;
+    color: white;
+    padding: 12px 25px;
+    margin: 8px 6px;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    box-shadow: 0 3px 8px #006bb2aa;
+    transition: background-color 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn:hover {
+    background-color: #007bbf;
+  }
+  .btn:active {
+    background-color: #005f94;
+  }
+
 </style>
 </head>
 <body>
-<h1>🎰 Negación Erótica</h1>
 
-<!-- BLOQUE ESTADO DEL JUEGO -->
-<div id="estadoJuego">
-  <p id="msgIntento"></p>
-  <p>Último día jugado: <span id="ultimoDiaTxt"></span></p>
-  <p>Racha: <span id="rachaTxt"></span> días</p>
-  <p>Probabilidad actual: <span id="probabilidadTxt"></span>%</p>
+<h1><span>🎰</span>Negación Erótica</h1>
+<div id="mensajeError" style="display:none;">Hoy <b>ya</b> usaste tu intento.</div>
 
-  <div id="historialBox">
-    <h3>Historial de días</h3>
-    <div id="historialDetalles"></div>
-  </div>
+<div id="info">
+  <div>Último día jugado: <span id="ultimoDia">-</span></div>
+  <div>Racha: <span id="racha">0</span> días</div>
+  <div>Probabilidad actual: <span id="probabilidad">0%</span></div>
 </div>
 
-<audio id="audioFondo" src="arcade_theme.mp3" loop></audio>
-<button id="playAudioBtn">▶️ Iniciar Música</button>
-
-<div id="slotContainer">
-  <div class="cell" id="c0">🍒</div>
-  <div class="cell" id="c1">🍋</div>
-  <div class="cell" id="c2">🔔</div>
+<div id="historial">
+  <!-- Historial de tiradas -->
 </div>
 
-<br />
+<div id="simbolos">
+  <button disabled>🍒</button>
+  <button disabled>🍋</button>
+  <button disabled>🔔</button>
+</div>
 
-<button id="spinBtn">🎰 Girar</button>
-<button id="verVideoBtn">🎥 Ver video no atractivo (+5%)</button>
-<button id="verReglasBtn">📜 Ver Reglas</button>
-<button id="simularBtn">🧪 Simular 365 días</button>
-<button id="reiniciarBtn">🔄 Reiniciar</button>
-
-<p id="msg"></p>
-<p id="stats"></p>
-<p id="racha"></p>
-
-<!-- Historial oculto, necesario para que funcione el script -->
-<div id="historial" style="display:none;"></div>
-
-<h3>Top 10 combinaciones</h3>
-<canvas id="histogramCanvas" width="600" height="300"></canvas>
-
-<h3>Evolución probabilidad</h3>
-<canvas id="probabilidadCanvas" width="600" height="150"></canvas>
-
-<h3>Tabla de Premios</h3>
-<table id="tablaPremios">
-  <tr><th>Combinación</th><th>Premio</th></tr>
-</table>
+<div>
+  <button id="girarBtn" class="btn">🎰 Girar</button>
+  <button id="verVideoBtn" class="btn">🎥 Ver video no atractivo (+5%)</button>
+  <button id="verReglasBtn" class="btn">📜 Ver Reglas</button>
+  <button id="simularBtn" class="btn">🪄 Simular 365 días</button>
+  <button id="reiniciarBtn" class="btn">🧹 Reiniciar</button>
+</div>
 
 <script>
-  /* =========================================================
-   VARIABLES PRINCIPALES
-  ========================================================= */
-  const cells = [0, 1, 2].map((i) => document.getElementById("c" + i));
-  const msg = document.getElementById("msg");
-  const stats = document.getElementById("stats");
-  const rachaTxtExtra = document.getElementById("racha");
-  const historialDiv = document.getElementById("historial");
-  const tablaPremios = document.getElementById("tablaPremios");
-
+  // Variables principales
   let symbolsBase = ["🍒", "🍋", "🔔", "💎"];
-  let premios = {
-    "🍒🍒🍒": "Arruinado en 1 min.",
-    "🍋🍋🍋": "Arruinado en 3 min.",
-    "🔔🔔🔔": "Arruinado en 5 min.",
-    "💎💎💎": "Arruinado en 10 min."
-  };
+  let especialSymbol = "⭐";
 
-  let prob = parseFloat(localStorage.getItem("prob")) || 50;
+  let probabilidadBase = 50; // prob base de salir ⭐ (en %)
+  let probabilidadActual = parseFloat(localStorage.getItem("probabilidad")) || probabilidadBase;
+
   let ultimoDia = localStorage.getItem("ultimoDia") || "";
   let racha = parseInt(localStorage.getItem("racha")) || 0;
-  let historial = JSON.parse(localStorage.getItem("historialDias") || "[]");
-  let modoEspecial = localStorage.getItem("modoEspecial") === "true";
-  let probHistorial = JSON.parse(localStorage.getItem("probHistorial") || "[]");
+  let historial = JSON.parse(localStorage.getItem("historial") || "[]");
+  let modoEspecial = true; // activado siempre por el contexto
   let combinaciones = JSON.parse(localStorage.getItem("combinaciones") || "{}");
 
-  /* =========================================================
-   FUNCIONES DE ESTADO Y LOCALSTORAGE
-  ========================================================= */
+  // Referencias DOM
+  const mensajeError = document.getElementById("mensajeError");
+  const ultimoDiaSpan = document.getElementById("ultimoDia");
+  const rachaSpan = document.getElementById("racha");
+  const probabilidadSpan = document.getElementById("probabilidad");
+  const historialDiv = document.getElementById("historial");
+  const simbolosBtns = [...document.querySelectorAll("#simbolos > button")];
+
+  const girarBtn = document.getElementById("girarBtn");
+  const verVideoBtn = document.getElementById("verVideoBtn");
+  const verReglasBtn = document.getElementById("verReglasBtn");
+  const simularBtn = document.getElementById("simularBtn");
+  const reiniciarBtn = document.getElementById("reiniciarBtn");
+
+  // Funciones auxiliares
   function hoy() {
     return new Date().toISOString().split("T")[0];
   }
-  function guardar() {
-    localStorage.setItem("prob", prob);
+
+  function guardarEstado() {
+    localStorage.setItem("probabilidad", probabilidadActual);
     localStorage.setItem("ultimoDia", ultimoDia);
     localStorage.setItem("racha", racha);
-    localStorage.setItem("modoEspecial", modoEspecial);
-    localStorage.setItem("historialDias", JSON.stringify(historial));
-    localStorage.setItem("probHistorial", JSON.stringify(probHistorial));
+    localStorage.setItem("historial", JSON.stringify(historial));
     localStorage.setItem("combinaciones", JSON.stringify(combinaciones));
   }
-  function addHistorial(texto) {
-    historial.push({ fecha: hoy(), texto });
-    renderHistorial();
-    actualizarEstadoJuego();
-    guardar();
-  }
-  function renderHistorial() {
-    historialDiv.innerHTML = historial
-      .map((h) => `<div>📅 ${h.fecha}: ${h.texto}</div>`)
-      .join("");
-  }
-  function actualizarTablaPremios() {
-    tablaPremios.innerHTML = "<tr><th>Combinación</th><th>Premio</th></tr>";
-    Object.entries(premios).forEach(([combo, premio]) => {
-      tablaPremios.innerHTML += `<tr><td>${combo}</td><td>${premio}</td></tr>`;
-    });
-  }
-  actualizarTablaPremios();
 
-  /* =========================================================
-   GRAFICOS
-  ========================================================= */
-  let histChart, probChart;
-  function actualizarGraficoHistograma() {
-    const ctx = document.getElementById("histogramCanvas").getContext("2d");
-    let entradas = Object.entries(combinaciones);
-    entradas.sort((a, b) => b[1] - a[1]);
-    let top10 = entradas.slice(0, 10);
-    let labels = top10.map((e) => e[0]);
-    let data = top10.map((e) => e[1]);
-    if (histChart) histChart.destroy();
-    histChart = new Chart(ctx, {
-      type: "bar",
-      data: { labels, datasets: [{ label: "Frecuencia", data, backgroundColor: "#0af" }] },
-    });
-  }
-  function actualizarGraficoProbabilidad() {
-    const ctx = document.getElementById("probabilidadCanvas").getContext("2d");
-    if (probChart) probChart.destroy();
-    probChart = new Chart(ctx, {
-      type: "line",
-      data: {
-        labels: probHistorial.map((_, i) => i + 1),
-        datasets: [{ label: "Probabilidad (%)", data: probHistorial, borderColor: "#0af", fill: false }],
-      },
-    });
-  }
-  actualizarGraficoProbabilidad();
-  actualizarGraficoHistograma();
+  function actualizarEstadoPantalla() {
+    ultimoDiaSpan.textContent = ultimoDia || "-";
+    rachaSpan.textContent = racha;
+    probabilidadSpan.textContent = probabilidadActual.toFixed(2) + "%";
 
-  /* =========================================================
-   NUEVO: ACTUALIZAR ESTADO JUEGO + HISTORIAL EN PANTALLA
-  ========================================================= */
-  function actualizarEstadoJuego() {
-    const msgIntento = document.getElementById("msgIntento");
-    const ultimoDiaTxt = document.getElementById("ultimoDiaTxt");
-    const rachaTxt = document.getElementById("rachaTxt");
-    const probabilidadTxt = document.getElementById("probabilidadTxt");
-    const historialDetalles = document.getElementById("historialDetalles");
-
+    // Mostrar si ya jugó hoy
     if (ultimoDia === hoy()) {
-      msgIntento.textContent = "Hoy ya usaste tu intento.";
+      mensajeError.style.display = "block";
+      girarBtn.disabled = true;
     } else {
-      msgIntento.textContent = "";
+      mensajeError.style.display = "none";
+      girarBtn.disabled = false;
     }
-    ultimoDiaTxt.textContent = ultimoDia || "Ninguno";
-    rachaTxt.textContent = racha;
-    probabilidadTxt.textContent = prob.toFixed(2);
 
-    if (historial.length === 0) {
-      historialDetalles.innerHTML = "<i>No hay historial aún.</i>";
-    } else {
-      historialDetalles.innerHTML = historial
-        .map((h) => `<div>📅 ${h.fecha}: ${h.texto}</div>`)
-        .join("");
-    }
+    // Actualizar símbolos visibles en botones (solo visual)
+    simbolosBtns.forEach((btn, i) => {
+      btn.textContent = symbolsBase[i];
+    });
+
+    // Mostrar historial
+    historialDiv.innerHTML = historial.map((item, idx) => {
+      const diaStr = item.dia ? `Día ${item.dia}` : "";
+      const esEspecial = item.especial ? "premio-especial" : "";
+      const tiradaStr = item.tirada || "";
+      const negacion = "❌ Negación";
+      return `<div class="${esEspecial}">📅 ${diaStr}: Tirada: ${tiradaStr} ${negacion}</div>`;
+    }).join("");
   }
-  actualizarEstadoJuego();
 
-  /* =========================================================
-   FUNCIONES DE SLOT
-  ========================================================= */
-  function getSymbol() {
-    if (modoEspecial && Math.random() < 0.05) return "⭐";
+  function getSimbolo() {
+    if (!modoEspecial) return symbolsBase[Math.floor(Math.random() * symbolsBase.length)];
+
+    // Modo especial: probabilidad de estrella aumenta con racha, max 30%
+    let probEstrella = 0.05 + racha * 0.01;
+    if (probEstrella > 0.30) probEstrella = 0.30;
+
+    if (Math.random() < probEstrella) return especialSymbol;
     return symbolsBase[Math.floor(Math.random() * symbolsBase.length)];
   }
-  function girarRodillos(finalSymbols) {
-    let spins = 15,
-      count = 0;
-    const interval = setInterval(() => {
-      cells.forEach((c) => (c.textContent = getSymbol()));
-      count++;
-      if (count >= spins) {
-        clearInterval(interval);
-        cells.forEach((c, i) => (c.textContent = finalSymbols[i]));
-      }
-    }, 80);
-  }
 
-  /* =========================================================
-   BOTÓN: GIRAR NORMAL
-  ========================================================= */
-  document.getElementById("spinBtn").addEventListener("click", () => {
+  function jugarDia() {
     if (ultimoDia === hoy()) {
-      alert("Solo 1 tirada por día.");
+      alert("Ya jugaste hoy, vuelve mañana.");
       return;
     }
-    let s1 = getSymbol(),
-      s2 = getSymbol(),
-      s3 = getSymbol();
-    girarRodillos([s1, s2, s3]);
-    const combo = s1 + s2 + s3;
-    combinaciones[combo] = (combinaciones[combo] || 0) + 1;
-    const gano = s1 === s2 && s2 === s3;
-    if (gano) prob += 0.2;
-    else prob -= 0.05;
-    if (prob < 0) prob = 0;
-    if (prob > 100) prob = 100;
-    probHistorial.push(prob);
-    racha++;
-    ultimoDia = hoy();
-    if (racha === 5) prob += 3;
-    if (racha === 10) prob += 6;
-    if (racha >= 20 && !modoEspecial) modoEspecial = true;
-    addHistorial(`Tirada: ${combo} ${gano ? "🎉 Ganaste!" : "❌ Negación"}`);
 
-    actualizarGraficoProbabilidad();
-    actualizarGraficoHistograma();
-    actualizarEstadoJuego();
-    guardar();
-  });
+    // Tirada
+    let s1 = getSimbolo();
+    let s2 = getSimbolo();
+    let s3 = getSimbolo();
 
-  /* =========================================================
-   BOTÓN: VIDEO
-  ========================================================= */
-  document.getElementById("verVideoBtn").addEventListener("click", () => {
-    prob += 5;
-    if (prob > 100) prob = 100;
-    probHistorial.push(prob);
-    addHistorial("Video visto (+5%)");
-    guardar();
-    actualizarGraficoProbabilidad();
-    actualizarEstadoJuego();
-  });
-
-  /* =========================================================
-   BOTÓN: REGLAS
-  ========================================================= */
-  document.getElementById("verReglasBtn").addEventListener("click", () => {
-    alert(
-      "Reglas:\n" +
-        "- Solo 1 tirada permitida por día.\n" +
-        "- La racha incrementa en +1 cada día que juegas.\n" +
-        "- Racha 5 días: +3% probabilidad.\n" +
-        "- Racha 10 días: +6% probabilidad.\n" +
-        "- Si no juegas un día, racha se rompe y -10% probabilidad.\n" +
-        "- Racha 20 días activa modo especial (símbolo ⭐).\n" +
-        "- Ganar: que los 3 símbolos sean iguales.\n" +
-        "- Premios: ver tabla de premios.\n"
-    );
-  });
-
-  /* =========================================================
-   BOTÓN: SIMULACIÓN 365 DÍAS
-  ========================================================= */
-  document.getElementById("simularBtn").addEventListener("click", () => {
-    if (!confirm("Esto simulará 365 tiradas automáticamente. ¿Continuar?")) return;
-    for (let d = 0; d < 365; d++) {
-      let s1 = getSymbol(),
-        s2 = getSymbol(),
-        s3 = getSymbol();
-      const combo = s1 + s2 + s3;
-      combinaciones[combo] = (combinaciones[combo] || 0) + 1;
-      const gano = s1 === s2 && s2 === s3;
-      if (gano) prob += 0.2;
-      else prob -= 0.05;
-      if (prob < 0) prob = 0;
-      if (prob > 100) prob = 100;
-      probHistorial.push(prob);
-      racha++;
-      if (racha === 5) prob += 3;
-      if (racha === 10) prob += 6;
-      if (racha >= 20 && !modoEspecial) modoEspecial = true;
-      historial.push({ fecha: `Día ${d + 1}`, texto: `Tirada: ${combo} ${gano ? "🎉 Ganaste!" : "❌ Negación"}` });
+    // Garantizar al menos 3 premios especiales en racha (modo especial)
+    let estrellasConseguidas = Object.keys(combinaciones).filter(k => k === especialSymbol.repeat(3)).length > 0 ? combinaciones[especialSymbol.repeat(3)] : 0;
+    if (modoEspecial && estrellasConseguidas < 3) {
+      s1 = s2 = s3 = especialSymbol;
     }
-    guardar();
-    renderHistorial();
-    actualizarGraficoProbabilidad();
-    actualizarGraficoHistograma();
-    actualizarTablaPremios();
-    actualizarEstadoJuego();
-    alert("Simulación de 365 días completada!");
-  });
 
-  /* =========================================================
-   BOTÓN: REINICIAR
-  ========================================================= */
-  document.getElementById("reiniciarBtn").addEventListener("click", () => {
-    if (!confirm("Se reiniciará todo el progreso. ¿Continuar?")) return;
-    localStorage.clear();
-    location.reload();
-  });
+    // Registrar combinación
+    let combo = s1 + s2 + s3;
+    combinaciones[combo] = (combinaciones[combo] || 0) + 1;
 
-  /* =========================================================
-   BOTÓN: AUDIO
-  ========================================================= */
-  document.getElementById("playAudioBtn").addEventListener("click", () => {
-    document.getElementById("audioFondo").play();
-  });
+    // Actualizar símbolos visuales (reemplazamos botones)
+    simbolosBtns[0].textContent = s1;
+    simbolosBtns[1].textContent = s2;
+    simbolosBtns[2].textContent = s3;
+
+    // Guardar historial con info de día y si es especial
+    let nuevoDia = historial.length ? historial[historial.length - 1].dia + 1 : 1;
+    historial.push({
+      dia: nuevoDia,
+      tirada: combo,
+      especial: combo === especialSymbol.repeat(3)
+    });
+
+    ultimoDia = hoy();
+    racha++;
+    guardarEstado();
+    actualizarEstadoPantalla();
+  }
+
+  function verVideo() {
+    probabilidadActual += 5;
+    if (probabilidadActual > 100) probabilidadActual = 100;
+    historial.push({dia: historial.length ? historial[historial.length - 1].dia + 1 : 1, tirada: "Video visto (+5%)", especial: false});
+    guardarEstado();
+    actualizarEstadoPantalla();
+  }
+
+  function verReglas() {
+    alert(`Reglas:\n- Solo una tirada por día.\n- Modo especial aumenta probabilidad de ⭐ según la racha.\n- Al menos 3 premios especiales ⭐ aparecerán en modo especial.`);
+  }
+
+  function simular365Dias() {
+    for (let i = 1; i <= 365; i++) {
+      let s1 = getSimbolo();
+      let s2 = getSimbolo();
+      let s3 = getSimbolo();
+
+      let estrellasConseguidas = combinaciones[especialSymbol.repeat(3)] || 0;
+      if (modoEspecial && estrellasConseguidas < 3) {
+        s1 = s2 = s3 = especialSymbol;
+      }
+
+      let combo = s1 + s2 + s3;
+      combinaciones[combo] = (combinaciones[combo] || 0) + 1;
+
+      historial.push({
+        dia: i,
+        tirada: combo,
+        especial: combo === especialSymbol.repeat(3)
+      });
+    }
+    guardarEstado();
+    actualizarEstadoPantalla();
+    alert("Simulación completada.");
+  }
+
+  function reiniciar() {
+    if (confirm("¿Seguro que quieres reiniciar todo? Se perderán los datos guardados.")) {
+      localStorage.clear();
+      location.reload();
+    }
+  }
+
+  // Eventos
+  girarBtn.addEventListener("click", jugarDia);
+  verVideoBtn.addEventListener("click", verVideo);
+  verReglasBtn.addEventListener("click", verReglas);
+  simularBtn.addEventListener("click", simular365Dias);
+  reiniciarBtn.addEventListener("click", reiniciar);
+
+  // Inicializar
+  actualizarEstadoPantalla();
+
 </script>
+
 </body>
 </html>
