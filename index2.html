@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Tragaperras Negación Erótica — GitHub Pages</title>
+<title>Tragaperras Negación Erótica</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
   body { background: #111; color: #fff; font-family: system-ui; text-align: center; padding: 20px; }
@@ -11,17 +11,17 @@
   button:disabled { background: #555; cursor: not-allowed; }
   #slotContainer { display: flex; justify-content: center; margin-top: 20px; }
   .cell { width: 80px; height: 80px; background: #222; border-radius: 8px; margin: 0 5px; display: flex; justify-content: center; align-items: center; font-size: 40px; transition: transform 0.3s; }
-  .modo-especial-linea { background-color: gold; color: black; padding: 4px 8px; border-radius: 4px; }
   .card { background: #222; padding: 16px; border-radius: 10px; margin: 10px auto; max-width: 600px; }
   canvas { background: #111; margin-top: 10px; border-radius: 8px; }
   table { margin: 10px auto; border-collapse: collapse; }
   th, td { border: 1px solid #0af; padding: 6px 10px; }
   th { background: #0af; color: #111; }
-  #estadoJuego { margin-bottom: 20px; max-width: 600px; margin-left: auto; margin-right: auto; color: #fff; font-family: monospace, monospace; text-align: left; }
+  #estadoJuego { margin-bottom: 20px; max-width: 600px; margin-left: auto; margin-right: auto; color: #fff; font-family: monospace; text-align: left; }
   #msgIntento { color: red; font-weight: bold; font-size: 1.1em; margin-bottom: 8px; text-align: center; }
   #historialBox { background: #222; padding: 10px; border-radius: 10px; font-size: 14px; color: #eee; max-height: 180px; overflow-y: auto; }
   #historialBox h3 { margin-top: 0; font-weight: bold; text-align: center; }
   #historialDetalles div { margin: 4px 0; }
+  .premio-especial { background-color: yellow; color: #000; font-weight: bold; }
 </style>
 </head>
 <body>
@@ -53,10 +53,6 @@
 <button id="simularBtn">🧪 Simular 365 días</button>
 <button id="reiniciarBtn">🔄 Reiniciar</button>
 
-<p id="msg"></p>
-<p id="stats"></p>
-<p id="racha"></p>
-
 <div id="historial" style="display:none;"></div>
 
 <h3>Top 10 combinaciones</h3>
@@ -72,7 +68,6 @@
 
 <script>
 const cells = [0,1,2].map(i => document.getElementById("c"+i));
-const msg = document.getElementById("msg");
 const historialDiv = document.getElementById("historial");
 const tablaPremios = document.getElementById("tablaPremios");
 
@@ -88,73 +83,69 @@ let premios = {
 let prob = parseFloat(localStorage.getItem("prob")) || 50;
 let ultimoDia = localStorage.getItem("ultimoDia") || "";
 let racha = parseInt(localStorage.getItem("racha")) || 0;
-let historial = JSON.parse(localStorage.getItem("historialDias") || "[]");
-let premiosEspecialesPost20 = parseInt(localStorage.getItem("premiosEspecialesPost20") || "0");
-let probHistorial = JSON.parse(localStorage.getItem("probHistorial") || "[]");
-let combinaciones = JSON.parse(localStorage.getItem("combinaciones") || "{}");
+let historial = JSON.parse(localStorage.getItem("historialDias")||"[]");
+let premiosEspecialesPost20 = parseInt(localStorage.getItem("premiosEspecialesPost20")||"0");
+let probHistorial = JSON.parse(localStorage.getItem("probHistorial")||"[]");
+let combinaciones = JSON.parse(localStorage.getItem("combinaciones")||"{}");
 
-function hoy() { return new Date().toISOString().split("T")[0]; }
-function guardar() {
-  localStorage.setItem("prob", prob);
-  localStorage.setItem("ultimoDia", ultimoDia);
-  localStorage.setItem("racha", racha);
-  localStorage.setItem("premiosEspecialesPost20", premiosEspecialesPost20);
-  localStorage.setItem("historialDias", JSON.stringify(historial));
-  localStorage.setItem("probHistorial", JSON.stringify(probHistorial));
-  localStorage.setItem("combinaciones", JSON.stringify(combinaciones));
+function hoy(){ return new Date().toISOString().split("T")[0]; }
+function guardar(){
+  localStorage.setItem("prob",prob);
+  localStorage.setItem("ultimoDia",ultimoDia);
+  localStorage.setItem("racha",racha);
+  localStorage.setItem("premiosEspecialesPost20",premiosEspecialesPost20);
+  localStorage.setItem("historialDias",JSON.stringify(historial));
+  localStorage.setItem("probHistorial",JSON.stringify(probHistorial));
+  localStorage.setItem("combinaciones",JSON.stringify(combinaciones));
 }
-function addHistorial(texto, especial=false) {
-  historial.push({ fecha:hoy(), texto, especial });
+function addHistorial(texto, especial=false){
+  historial.push({ fecha:hoy(), texto, especial});
   renderHistorial();
   actualizarEstadoJuego();
   guardar();
 }
-function renderHistorial() {
-  historialDiv.innerHTML = historial
-    .map(h => `<div class="${h.especial ? 'modo-especial-linea' : ''}">📅 ${h.fecha}: ${h.texto}</div>`)
-    .join("");
+function renderHistorial(){
+  const historialDetalles = document.getElementById("historialDetalles");
+  historialDetalles.innerHTML = historial.map(h => 
+    `<div class="${h.especial?'premio-especial':''}">📅 ${h.fecha}: ${h.texto}</div>`
+  ).join("");
 }
-function actualizarTablaPremios() {
-  tablaPremios.innerHTML="<tr><th>Combinación</th><th>Premio</th></tr>";
+
+function actualizarTablaPremios(){
+  tablaPremios.innerHTML = "<tr><th>Combinación</th><th>Premio</th></tr>";
   Object.entries(premios).forEach(([combo,premio])=>{
-    tablaPremios.innerHTML+=`<tr><td>${combo}</td><td>${premio}</td></tr>`;
+    tablaPremios.innerHTML += `<tr><td>${combo}</td><td>${premio}</td></tr>`;
   });
 }
 actualizarTablaPremios();
 
 let histChart, probChart;
-function actualizarGraficoHistograma() {
-  const ctx=document.getElementById("histogramCanvas").getContext("2d");
-  let entradas=Object.entries(combinaciones);
-  entradas.sort((a,b)=>b[1]-a[1]);
-  let top10=entradas.slice(0,10);
-  let labels=top10.map(e=>e[0]);
-  let data=top10.map(e=>e[1]);
+function actualizarGraficoHistograma(){
+  const ctx = document.getElementById("histogramCanvas").getContext("2d");
+  let entradas = Object.entries(combinaciones).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  let labels = entradas.map(e=>e[0]);
+  let data = entradas.map(e=>e[1]);
   if(histChart) histChart.destroy();
-  histChart=new Chart(ctx,{type:"bar",data:{labels,datasets:[{label:"Frecuencia",data,backgroundColor:"#0af"}]}});
+  histChart = new Chart(ctx,{type:"bar", data:{labels,datasets:[{label:"Frecuencia", data, backgroundColor:"#0af"}]}});
 }
-function actualizarGraficoProbabilidad() {
-  const ctx=document.getElementById("probabilidadCanvas").getContext("2d");
+function actualizarGraficoProbabilidad(){
+  const ctx = document.getElementById("probabilidadCanvas").getContext("2d");
   if(probChart) probChart.destroy();
-  probChart=new Chart(ctx,{type:"line",data:{labels:probHistorial.map((_,i)=>i+1),datasets:[{label:"Probabilidad (%)",data:probHistorial,borderColor:"#0af",fill:false}]}});
+  probChart = new Chart(ctx,{type:"line", data:{labels:probHistorial.map((_,i)=>i+1), datasets:[{label:"Probabilidad (%)", data:probHistorial,borderColor:"#0af",fill:false}]}});
 }
 actualizarGraficoProbabilidad();
 actualizarGraficoHistograma();
 
 function actualizarEstadoJuego(){
-  const msgIntento=document.getElementById("msgIntento");
-  const ultimoDiaTxt=document.getElementById("ultimoDiaTxt");
-  const rachaTxt=document.getElementById("rachaTxt");
-  const probabilidadTxt=document.getElementById("probabilidadTxt");
-  const historialDetalles=document.getElementById("historialDetalles");
-
-  msgIntento.textContent=ultimoDia===hoy()?"Hoy ya usaste tu intento.":"";
-  ultimoDiaTxt.textContent=ultimoDia||"Ninguno";
-  rachaTxt.textContent=racha;
-  probabilidadTxt.textContent=prob.toFixed(2);
-
-  if(historial.length===0) historialDetalles.innerHTML="<i>No hay historial aún.</i>";
-  else historialDetalles.innerHTML=historial.map(h=>`<div class="${h.especial?'modo-especial-linea':''}">📅 ${h.fecha}: ${h.texto}</div>`).join("");
+  const msgIntento = document.getElementById("msgIntento");
+  const ultimoDiaTxt = document.getElementById("ultimoDiaTxt");
+  const rachaTxt = document.getElementById("rachaTxt");
+  const probabilidadTxt = document.getElementById("probabilidadTxt");
+  if(ultimoDia===hoy()) msgIntento.textContent="Hoy ya usaste tu intento.";
+  else msgIntento.textContent="";
+  ultimoDiaTxt.textContent = ultimoDia||"Ninguno";
+  rachaTxt.textContent = racha;
+  probabilidadTxt.textContent = prob.toFixed(2);
 }
 actualizarEstadoJuego();
 
@@ -165,15 +156,12 @@ function getSymbolsModoEspecial(){
   if(racha>=25) probEstrella=0.1;
   if(racha>=30) probEstrella=0.15;
   if(racha>=35) probEstrella=0.2;
-
-  let symbols=[];
-  for(let i=0;i<3;i++) symbols.push(Math.random()<probEstrella?"⭐":getSymbol());
-
+  let symbols = [];
+  for(let i=0;i<3;i++){ symbols.push(Math.random()<probEstrella?"⭐":getSymbol()); }
   if(racha>=20 && premiosEspecialesPost20<3){
     if(!symbols.includes("⭐")) symbols[Math.floor(Math.random()*3)]="⭐";
     premiosEspecialesPost20++;
   }
-
   return symbols;
 }
 
@@ -182,30 +170,30 @@ function girarRodillos(finalSymbols){
   const interval=setInterval(()=>{
     cells.forEach(c=>c.textContent=getSymbol());
     count++;
-    if(count>=spins){ clearInterval(interval); cells.forEach((c,i)=>c.textContent=finalSymbols[i]); }
+    if(count>=spins){
+      clearInterval(interval);
+      cells.forEach((c,i)=>c.textContent=finalSymbols[i]);
+    }
   },80);
 }
 
 document.getElementById("spinBtn").addEventListener("click",()=>{
   if(ultimoDia===hoy()){ alert("Solo 1 tirada por día."); return; }
-
-  let s1,s2,s3,especial=false;
-  if(racha>=20){ [s1,s2,s3]=getSymbolsModoEspecial(); }
+  let s1,s2,s3, esEspecial=false;
+  if(racha>=20){ [s1,s2,s3]=getSymbolsModoEspecial(); esEspecial=(s1==="⭐"&&s2==="⭐"&&s3==="⭐"); }
   else{ s1=getSymbol(); s2=getSymbol(); s3=getSymbol(); }
 
-  if(s1==="⭐"&&s2==="⭐"&&s3==="⭐") especial=true;
-
   girarRodillos([s1,s2,s3]);
-  const combo=s1+s2+s3;
+  const combo = s1+s2+s3;
   combinaciones[combo]=(combinaciones[combo]||0)+1;
-  const gano=s1===s2&&s2===s3;
+  const gano = s1===s2 && s2===s3;
   if(gano) prob+=0.2; else prob-=0.05;
-  if(prob<0) prob=0; if(prob>100) prob=100;
+  if(prob<0) prob=0;
+  if(prob>100) prob=100;
   probHistorial.push(prob);
   racha++;
   ultimoDia=hoy();
-  addHistorial(`Tirada: ${combo} ${gano?"🎉 Ganaste!":"❌ Negación"}`, especial);
-
+  addHistorial(`Tirada: ${combo} ${gano?"🎉 Ganaste!":"❌ Negación"}`, esEspecial);
   actualizarGraficoProbabilidad();
   actualizarGraficoHistograma();
   actualizarEstadoJuego();
@@ -213,8 +201,12 @@ document.getElementById("spinBtn").addEventListener("click",()=>{
 });
 
 document.getElementById("verVideoBtn").addEventListener("click",()=>{
-  prob+=5; if(prob>100) prob=100; probHistorial.push(prob);
-  addHistorial("Video visto (+5%)"); guardar(); actualizarGraficoProbabilidad(); actualizarEstadoJuego();
+  prob+=5; if(prob>100) prob=100;
+  probHistorial.push(prob);
+  addHistorial("Video visto (+5%)");
+  guardar();
+  actualizarGraficoProbabilidad();
+  actualizarEstadoJuego();
 });
 
 document.getElementById("verReglasBtn").addEventListener("click",()=>{
@@ -233,29 +225,33 @@ document.getElementById("verReglasBtn").addEventListener("click",()=>{
 
 document.getElementById("simularBtn").addEventListener("click",()=>{
   if(!confirm("Esto simulará 365 tiradas automáticamente. ¿Continuar?")) return;
-  for(let d=0;d<365;d++){
-    let s1,s2,s3,especial=false;
-    if(racha>=20){ [s1,s2,s3]=getSymbolsModoEspecial(); }
+  for(let d=0; d<365; d++){
+    let s1,s2,s3, esEspecial=false;
+    if(racha>=20){ [s1,s2,s3]=getSymbolsModoEspecial(); esEspecial=(s1==="⭐"&&s2==="⭐"&&s3==="⭐"); }
     else{ s1=getSymbol(); s2=getSymbol(); s3=getSymbol(); }
-
-    if(s1==="⭐"&&s2==="⭐"&&s3==="⭐") especial=true;
-
-    const combo=s1+s2+s3;
+    const combo = s1+s2+s3;
     combinaciones[combo]=(combinaciones[combo]||0)+1;
-    const gano=s1===s2&&s2===s3;
+    const gano = s1===s2 && s2===s3;
     if(gano) prob+=0.2; else prob-=0.05;
-    if(prob<0) prob=0; if(prob>100) prob=100;
+    if(prob<0) prob=0;
+    if(prob>100) prob=100;
     probHistorial.push(prob);
     racha++;
-    historial.push({ fecha:`Día ${d+1}`, texto:`Tirada: ${combo} ${gano?"🎉 Ganaste!":"❌ Negación"}`, especial});
+    historial.push({fecha:`Día ${d+1}`, texto:`Tirada: ${combo} ${gano?"🎉 Ganaste!":"❌ Negación"}`, especial: esEspecial});
   }
-  guardar(); renderHistorial(); actualizarGraficoProbabilidad(); actualizarGraficoHistograma(); actualizarTablaPremios(); actualizarEstadoJuego();
+  guardar();
+  renderHistorial();
+  actualizarGraficoProbabilidad();
+  actualizarGraficoHistograma();
+  actualizarTablaPremios();
+  actualizarEstadoJuego();
   alert("Simulación de 365 días completada!");
 });
 
 document.getElementById("reiniciarBtn").addEventListener("click",()=>{
   if(!confirm("Se reiniciará todo el progreso. ¿Continuar?")) return;
-  localStorage.clear(); location.reload();
+  localStorage.clear();
+  location.reload();
 });
 </script>
 </body>
