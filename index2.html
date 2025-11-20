@@ -4,33 +4,98 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Tragaperras Negación Erótica</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <style>
-  body { background: #111; color: #fff; font-family: system-ui; text-align: center; padding: 20px; }
-  button { padding: 10px 16px; margin: 5px; border: none; border-radius: 8px; background: #0af; color: #fff; font-weight: bold; cursor: pointer; }
-  button:disabled { background: #555; cursor: not-allowed; }
+  body { background: #111; color: #fff; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; text-align: center; padding: 20px; }
+  button { padding: 10px 16px; margin: 5px; border: none; border-radius: 8px; background: #0af; color: #111; font-weight: 700; cursor: pointer; }
+  button:disabled { background: #555; color: #aaa; cursor: not-allowed; }
   #slotContainer { display: flex; justify-content: center; margin-top: 20px; }
-  .cell { width: 80px; height: 80px; background: #222; border-radius: 8px; margin: 0 5px; display: flex; justify-content: center; align-items: center; font-size: 40px; transition: transform 0.3s; }
-  canvas { background: #111; margin-top: 10px; border-radius: 8px; }
-  table { margin: 10px auto; border-collapse: collapse; }
-  th, td { border: 1px solid #0af; padding: 6px 10px; }
-  th { background: #0af; color: #111; }
-  #estadoJuego { margin-bottom: 20px; max-width: 700px; margin-left: auto; margin-right: auto; color: #fff; font-family: monospace; text-align: left; }
-  #msgIntento { color: #ff5252; font-weight: bold; font-size: 1.1em; margin-bottom: 8px; text-align: center; }
-  #historialBox { background: #222; padding: 10px; border-radius: 10px; font-size: 14px; color: #eee; max-height: 220px; overflow-y: auto; }
+  .cell { width: 82px; height: 82px; background: #222; border-radius: 8px; margin: 0 6px; display: flex; justify-content: center; align-items: center; font-size: 42px; }
+  #resultadoTirada { font-size: 2em; font-weight: bold; margin-top: 20px; }
+  .premio { color: #4caf50; }
+  .sinPremio { color: #f44336; }
+  #estadoJuego { margin-bottom: 20px; max-width: 760px; margin-left: auto; margin-right: auto; color: #fff; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; text-align: left; }
+  #msgIntento { color: #ff5252; font-weight: bold; font-size: 1.05em; margin-bottom: 8px; text-align: center; }
+  #historialBox { background: #222; padding: 10px; border-radius: 10px; font-size: 14px; color: #eee; max-height: 240px; overflow-y: auto; }
   #historialBox h3 { margin-top: 0; font-weight: bold; text-align: center; }
   #historialDetalles div { margin: 4px 0; }
-  .premio-especial { background-color: yellow; color: #000; font-weight: bold; padding: 2px 4px; border-radius: 4px; }
+  .premio-especial { background-color: #ffe55c; color: #000; font-weight: bold; padding: 2px 4px; border-radius: 4px; }
+  #calendario { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: 12px; }
+  .dia { background: #333; padding: 8px; border-radius: 6px; }
+  .jugado { background: #0af; color: #111; font-weight: bold; }
+  table { margin: 20px auto; border-collapse: collapse; min-width: 320px; }
+  th, td { border: 1px solid #0af; padding: 6px 10px; }
+  th { background: #0af; color: #111; }
+  #calendarioBox { display: none; }
+
+  /* ===== MODAL ===== */
+  .modal {
+    display: none;
+    position: fixed;
+    z-index: 9999;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.65);
+    backdrop-filter: blur(4px);
+    justify-content: center;
+    align-items: center;
+  }
+
+  .modal-content {
+    background: #222;
+    padding: 25px;
+    border-radius: 12px;
+    width: 85%;
+    max-width: 420px;
+    text-align: left;
+    color: #eee;
+    border: 2px solid #0af;
+    animation: aparecer 0.25s ease-out;
+  }
+
+  .modal-content h2 {
+    margin-top: 0;
+    text-align: center;
+    color: #0af;
+  }
+
+  .cerrarBtn {
+    display: block;
+    width: 100%;
+    margin-top: 15px;
+    padding: 10px;
+    background: #0af;
+    color: #111;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+  video {
+    width: 100%;
+    border-radius: 8px;
+    margin-top: 10px;
+  }
+
+  @keyframes aparecer {
+    from { transform: scale(0.8); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
 </style>
+
 </head>
 <body>
+
 <h1>🎰 Negación Erótica</h1>
 
 <div id="estadoJuego">
   <p id="msgIntento"></p>
   <p>Último día jugado: <span id="ultimoDiaTxt"></span></p>
   <p>Racha: <span id="rachaTxt"></span> días</p>
-  <p>Probabilidad actual: <span id="probabilidadTxt"></span>%</p>
+  <p>Progreso actual: <span id="progresoTxt"></span>%</p>
 
   <div id="historialBox">
     <h3>Historial de días</h3>
@@ -44,35 +109,82 @@
   <div class="cell" id="c2">🔔</div>
 </div>
 
-<br />
+<div id="resultadoTirada">👉 Esperando tirada...</div>
+
+<br>
 
 <button id="spinBtn">🎰 Girar</button>
-<button id="verVideoBtn">🎥 Ver video no atractivo (+5%)</button>
+<button id="verVideoBtn">🎥 Ver video no atractivo (+5)</button>
 <button id="verReglasBtn">📜 Ver Reglas</button>
-<button id="simularBtn">🧪 Simular 365 días</button>
+<button id="toggleCalendarioBtn">📅 Mostrar/Ocultar Calendario</button>
 <button id="reiniciarBtn">🔄 Reiniciar</button>
 
-<h3>Frecuencia de premios</h3>
-<canvas id="premiosCanvas" width="700" height="320"></canvas>
+<div id="calendarioBox">
+  <h3>📅 Calendario de progreso</h3>
+  <div id="calendario"></div>
+</div>
 
-<h3>Evolución de “Probabilidad actual”</h3>
-<canvas id="probabilidadCanvas" width="700" height="180"></canvas>
-
-<h3>Tabla de Premios</h3>
+<h3>🏆 Tabla de Premios</h3>
 <table id="tablaPremios">
   <tr><th>Combinación</th><th>Premio</th></tr>
 </table>
 
-<script>
-/* =========================
-   Estado y persistencia
-========================= */
-const cells = [0,1,2].map(i => document.getElementById("c"+i));
-const historialDiv = document.getElementById("historialDetalles");
-const tablaPremios = document.getElementById("tablaPremios");
+<!-- MODAL REGLAS -->
+<div id="modalReglas" class="modal">
+  <div class="modal-content">
+    <h2>📜 Reglas</h2>
+    <p>- Solo 1 tirada por día.</p>
+    <p>- Solo 1 video no atractivo por día.</p>
+    <p>- La racha aumenta cada día que juegas.</p>
+    <p>- Si no juegas un día, la racha se reinicia.</p>
+    <p>- Desde 20 días se activa el modo especial ⭐.</p>
+    <p>- Ganar: 3 símbolos iguales.</p>
+    <p>- Premios: 🍒=1min, 🍋=3min, 🔔=5min, 💎=10min, ⭐=Mega premio.</p>
+    <p>- Ver video no atractivo: +5% de progreso.</p>
+    <button id="cerrarModalBtn" class="cerrarBtn">Cerrar</button>
+  </div>
+</div>
 
-let symbolsBase = ["🍒","🍋","🔔","💎"];
-let premios = {
+<!-- MODAL VIDEO LOCAL -->
+<div id="modalVideo" class="modal">
+  <div class="modal-content">
+    <h2>Vídeo</h2>
+    <video id="videoNoAtractivo" controls>
+      <source src="video.mp4" type="video/mp4">
+      Tu navegador no soporta HTML5 video.
+    </video>
+    <button id="cerrarModalVideoBtn" class="cerrarBtn">Cerrar</button>
+  </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded",()=>{
+
+const cells=[0,1,2].map(i=>document.getElementById("c"+i));
+const resultadoDiv=document.getElementById("resultadoTirada");
+const historialDiv=document.getElementById("historialDetalles");
+const calendarioDiv=document.getElementById("calendario");
+const tablaPremios=document.getElementById("tablaPremios");
+const calendarioBox=document.getElementById("calendarioBox");
+
+const spinBtn=document.getElementById("spinBtn");
+const verVideoBtn=document.getElementById("verVideoBtn");
+const verReglasBtn=document.getElementById("verReglasBtn");
+const toggleCalendarioBtn=document.getElementById("toggleCalendarioBtn");
+const reiniciarBtn=document.getElementById("reiniciarBtn");
+
+const modalReglas=document.getElementById("modalReglas");
+const cerrarModalBtn=document.getElementById("cerrarModalBtn");
+
+const modalVideo=document.getElementById("modalVideo");
+const cerrarModalVideoBtn=document.getElementById("cerrarModalVideoBtn");
+const videoNoAtractivo=document.getElementById("videoNoAtractivo");
+
+function hoyISO(){ const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; }
+function formatoBonito(f){ const [y,m,d]=f.split("-"); return `${d}/${m}/${y}`; }
+
+const symbolsBase=["🍒","🍋","🔔","💎"];
+const premios={
   "🍒🍒🍒":"Arruinado en 1 min.",
   "🍋🍋🍋":"Arruinado en 3 min.",
   "🔔🔔🔔":"Arruinado en 5 min.",
@@ -80,277 +192,117 @@ let premios = {
   "⭐⭐⭐":"Modo especial: 🎉 Mega premio!"
 };
 
-let prob = parseFloat(localStorage.getItem("prob")) || 50; // marcador 0–100 que ahora influye en tirada
-let ultimoDia = localStorage.getItem("ultimoDia") || "";
-let racha = parseInt(localStorage.getItem("racha")) || 0;
-let historial = JSON.parse(localStorage.getItem("historialDias")||"[]");
-let premiosEspecialesPost20 = parseInt(localStorage.getItem("premiosEspecialesPost20")||"0");
-let probHistorial = JSON.parse(localStorage.getItem("probHistorial")||"[]");
-let combinaciones = JSON.parse(localStorage.getItem("combinaciones")||"{}");
+let ultimoDia=localStorage.getItem("ultimoDia")||"";
+let ultimoVideo=localStorage.getItem("ultimoVideo")||"";
+let racha=parseInt(localStorage.getItem("racha")||"0");
+let historial=JSON.parse(localStorage.getItem("historialDias")||"[]");
+let premiosEspecialesPost20=parseInt(localStorage.getItem("premiosEspecialesPost20")||"0");
+let progreso=parseInt(localStorage.getItem("progreso")||"50");
 
-function hoy(){ return new Date().toISOString().split("T")[0]; }
 function guardar(){
-  localStorage.setItem("prob",prob);
   localStorage.setItem("ultimoDia",ultimoDia);
+  localStorage.setItem("ultimoVideo",ultimoVideo);
   localStorage.setItem("racha",racha);
   localStorage.setItem("premiosEspecialesPost20",premiosEspecialesPost20);
   localStorage.setItem("historialDias",JSON.stringify(historial));
-  localStorage.setItem("probHistorial",JSON.stringify(probHistorial));
-  localStorage.setItem("combinaciones",JSON.stringify(combinaciones));
-}
-
-/* =========================
-   UI y gráficos
-========================= */
-function addHistorial(texto, especial=false){
-  historial.push({ fecha:hoy(), texto, especial});
-  renderHistorial();
-  actualizarEstadoJuego();
-  guardar();
+  localStorage.setItem("progreso",progreso);
 }
 
 function renderHistorial(){
-  historialDiv.innerHTML = historial.map(h => {
-    const cls = h.especial ? 'premio-especial' : '';
-    return `<div class="${cls}">📅 ${h.fecha}: ${h.texto}</div>`;
-  }).join("");
-}
-
-function actualizarTablaPremios(){
-  tablaPremios.innerHTML = "<tr><th>Combinación</th><th>Premio</th></tr>";
-  Object.entries(premios).forEach(([combo,premio])=>{
-    tablaPremios.innerHTML += `<tr><td>${combo}</td><td>${premio}</td></tr>`;
-  });
-}
-
-let probChart, premiosChart;
-
-function contarPremios() {
-  const conteo = {};
-  historial.forEach(h => {
-    let premio = "Negación";
-    Object.entries(premios).forEach(([combo, texto]) => {
-      if(h.texto.includes(combo)) premio = texto;
-    });
-    conteo[premio] = (conteo[premio] || 0) + 1;
-  });
-  return conteo;
-}
-
-function actualizarGraficoPremios() {
-  const ctx = document.getElementById("premiosCanvas").getContext("2d");
-  const conteoPremios = contarPremios();
-  const labels = Object.keys(conteoPremios);
-  const data = Object.values(conteoPremios);
-  if(premiosChart) premiosChart.destroy();
-  premiosChart = new Chart(ctx, {
-    type: "bar",
-    data: { labels, datasets: [{ label: "Veces que salió", data, backgroundColor: "#0af" }] },
-    options: { plugins: { legend: { display: false } } }
-  });
-}
-
-function actualizarGraficoProbabilidad(){
-  const ctx = document.getElementById("probabilidadCanvas").getContext("2d");
-  if(probChart) probChart.destroy();
-  probChart = new Chart(ctx,{
-    type:"line",
-    data:{
-      labels:probHistorial.map((_,i)=>i+1),
-      datasets:[{label:"Probabilidad actual (%)", data:probHistorial, borderColor:"#0af", fill:false}]
-    },
-    options: { plugins: { legend: { display: true } } }
-  });
+  historialDiv.innerHTML=historial.map(h=>`<div class="${h.especial?'premio-especial':''}">📅 ${formatoBonito(h.fecha)}: ${h.texto}</div>`).join("");
 }
 
 function actualizarEstadoJuego(){
-  const msgIntento = document.getElementById("msgIntento");
-  const ultimoDiaTxt = document.getElementById("ultimoDiaTxt");
-  const rachaTxt = document.getElementById("rachaTxt");
-  const probabilidadTxt = document.getElementById("probabilidadTxt");
-  if(ultimoDia===hoy()) msgIntento.textContent="Hoy ya usaste tu intento.";
-  else msgIntento.textContent="";
-  ultimoDiaTxt.textContent = ultimoDia||"Ninguno";
-  rachaTxt.textContent = racha;
-  probabilidadTxt.textContent = prob.toFixed(2);
+  const hoy=hoyISO();
+  document.getElementById("msgIntento").textContent=(ultimoDia===hoy)?"Hoy ya usaste tu intento.":"";
+  document.getElementById("ultimoDiaTxt").textContent=ultimoDia?formatoBonito(ultimoDia):"Ninguno";
+  document.getElementById("rachaTxt").textContent=racha;
+  document.getElementById("progresoTxt").textContent=progreso;
+
+  spinBtn.disabled=(ultimoDia===hoy);
+  verVideoBtn.disabled=(ultimoVideo===hoy);
 }
 
-// Inicializaciones UI
-actualizarTablaPremios();
-renderHistorial();
-actualizarGraficoProbabilidad();
-actualizarGraficoPremios();
-actualizarEstadoJuego();
-
-/* =========================
-   Lógica de símbolos y sesgos
-========================= */
-function getSymbol(){ return symbolsBase[Math.floor(Math.random()*symbolsBase.length)]; }
-
-// Sesgo por racha antes del modo especial
-function sesgoPorRacha(rachaActual){
-  if(rachaActual < 5)  return 0.15;
-  if(rachaActual < 10) return 0.25;
-  if(rachaActual < 20) return 0.35;
-  return 0; // desde 20 entra el modo especial ⭐
-}
-
-// Sesgo por “Probabilidad actual” (0–100 → 0.0–1.0), limitado
-function sesgoPorProbabilidad(valorProb){
-  const crudo = valorProb / 100;        // p.ej., 80 → 0.8
-  const max = 0.50;                      // límite 50% para no romper el juego
-  return Math.min(crudo, max);
-}
-
-// Combina sesgos sin exceder 1 (fórmula de prob. combinada complementaria)
-function combinarSesgos(a, b){
-  const combinado = 1 - (1 - a) * (1 - b);
-  const techo = 0.60; // techo global para mantener equilibrio
-  return Math.min(combinado, techo);
-}
-
-// Genera 3 símbolos con sesgo a triple (premio normal) antes del modo especial
-function getTripleOrRandomWithCombinedBias(){
-  const sesgoR = sesgoPorRacha(racha);
-  const sesgoP = sesgoPorProbabilidad(prob);
-  const sesgo = combinarSesgos(sesgoR, sesgoP);
-  if(Math.random() < sesgo){
-    const s = getSymbol();
-    return [s,s,s];
+function renderCalendario(){
+  calendarioDiv.innerHTML="";
+  const now=new Date();
+  const year=now.getFullYear();
+  const month=now.getMonth();
+  const dias=new Date(year,month+1,0).getDate();
+  for(let i=1;i<=dias;i++){
+    const fecha=`${year}-${String(month+1).padStart(2,"0")}-${String(i).padStart(2,"0")}`;
+    const jugado=historial.some(h=>h.fecha===fecha);
+    calendarioDiv.innerHTML+=`<div class="dia ${jugado?'jugado':''}">${i}</div>`;
   }
-  return [getSymbol(), getSymbol(), getSymbol()];
 }
 
-// Modo especial con estrellas; si no aparecen estrellas, aplica sesgo de triple normal
-function getSymbolsModoEspecial(){
-  let probEstrella=0.05;
-  if(racha>=25) probEstrella=0.10;
-  if(racha>=30) probEstrella=0.15;
-  if(racha>=35) probEstrella=0.20;
-
-  // Generación base con estrellas
-  let symbols = [];
-  for(let i=0;i<3;i++){ symbols.push(Math.random()<probEstrella ? "⭐" : getSymbol()); }
-
-  // Garantía de aparición de alguna ⭐ las primeras 3 veces post-20
-  if(racha>=20 && premiosEspecialesPost20<3){
-    if(!symbols.includes("⭐")) symbols[Math.floor(Math.random()*3)]="⭐";
-    premiosEspecialesPost20++;
-  }
-
-  // Si no hay estrellas, aplicamos sesgo combinado para triple normal
-  if(!symbols.includes("⭐")){
-    const sesgoR = sesgoPorRacha(racha);      // aquí tiende a 0 ya en 20+, pero lo mantenemos por consistencia
-    const sesgoP = sesgoPorProbabilidad(prob);
-    const sesgo = combinarSesgos(sesgoR, sesgoP);
-    if(Math.random() < sesgo){
-      const s = getSymbol();
-      symbols = [s,s,s];
-    }
-  }
-  return symbols;
+function actualizarTablaPremios(){
+  tablaPremios.innerHTML=`<tr><th>Combinación</th><th>Premio</th></tr>`;
+  Object.entries(premios).forEach(([c,p])=>{tablaPremios.innerHTML+=`<tr><td>${c}</td><td>${p}</td></tr>`;});
 }
 
-/* =========================
-   Animación y juego
-========================= */
-function girarRodillos(finalSymbols){
-  let spins=15, count=0;
-  const interval=setInterval(()=>{
-    cells.forEach(c=>c.textContent=getSymbol());
-    count++;
-    if(count>=spins){
-      clearInterval(interval);
-      cells.forEach((c,i)=>c.textContent=finalSymbols[i]);
-    }
-  },80);
-}
-
-document.getElementById("spinBtn").addEventListener("click",()=>{
-  if(ultimoDia===hoy()){ alert("Solo 1 tirada por día."); return; }
-  let s1,s2,s3, esEspecial=false;
-
-  if(racha>=20){
-    [s1,s2,s3]=getSymbolsModoEspecial();
-    esEspecial=(s1==="⭐"&&s2==="⭐"&&s3==="⭐");
-  } else {
-    [s1,s2,s3] = getTripleOrRandomWithCombinedBias();
-  }
-
-  girarRodillos([s1,s2,s3]);
-
-  const combo = s1+s2+s3;
-  combinaciones[combo]=(combinaciones[combo]||0)+1;
-
-  const gano = (s1===s2 && s2===s3);
-  if(gano) prob+=0.2; else prob-=0.05;
-  if(prob<0) prob=0;
-  if(prob>100) prob=100;
-
-  probHistorial.push(prob);
-  racha++;
-  ultimoDia=hoy();
-
-  addHistorial(`Tirada: ${combo} ${gano?"🎉 Ganaste!":"❌ Negación"}`, esEspecial);
-  actualizarGraficoProbabilidad();
-  actualizarGraficoPremios();
-  actualizarEstadoJuego();
-  guardar();
-});
-
-document.getElementById("verVideoBtn").addEventListener("click",()=>{
-  prob+=5; if(prob>100) prob=100;
-  probHistorial.push(prob);
-  addHistorial("Video visto (+5%)");
-  guardar();
-  actualizarGraficoProbabilidad();
-  actualizarEstadoJuego();
-});
-
-document.getElementById("verReglasBtn").addEventListener("click",()=>{
-  alert(
-    "Reglas:\n"+
-    "- Solo 1 tirada permitida por día.\n"+
-    "- La racha incrementa en +1 cada día que juegas.\n"+
-    "- Racha 20 días activa modo especial (símbolo ⭐).\n"+
-    "- Ganar: que los 3 símbolos sean iguales.\n"+
-    "- La 'Probabilidad actual' sube al ganar (+0.2) y al ver el video (+5), baja al perder (−0.05). Ahora también influye en las tiradas.\n"
-  );
-});
-
-document.getElementById("simularBtn").addEventListener("click",()=>{
-  if(!confirm("Esto simulará 365 tiradas automáticamente (ignora la restricción diaria). ¿Continuar?")) return;
-  for(let d=0; d<365; d++){
-    let s1,s2,s3, esEspecial=false;
-    if(racha>=20){
-      [s1,s2,s3]=getSymbolsModoEspecial();
-      esEspecial=(s1==="⭐"&&s2==="⭐"&&s3==="⭐");
-    } else {
-      [s1,s2,s3] = getTripleOrRandomWithCombinedBias();
-    }
-    const combo = s1+s2+s3;
-    combinaciones[combo]=(combinaciones[combo]||0)+1;
-    const gano = (s1===s2 && s2===s3);
-    if(gano) prob+=0.2; else prob-=0.05;
-    if(prob<0) prob=0;
-    if(prob>100) prob=100;
-    probHistorial.push(prob);
-    racha++;
-    historial.push({fecha:`Día ${d+1}`, texto:`Tirada: ${combo} ${gano?"🎉 Ganaste!":"❌ Negación"}`, especial: esEspecial});
-  }
-  guardar();
+function addHistorial(texto,especial=false){
+  historial.push({fecha:hoyISO(),texto,especial});
   renderHistorial();
-  actualizarGraficoProbabilidad();
-  actualizarGraficoPremios();
   actualizarEstadoJuego();
-  alert("Simulación de 365 días completada!");
+  renderCalendario();
+  guardar();
+}
+
+function getSymbol(){return symbolsBase[Math.floor(Math.random()*symbolsBase.length)];}
+function getSymbolsModoEspecial(){let p=0.05;if(racha>=25)p=0.10;if(racha>=30)p=0.15;if(racha>=35)p=0.20;let arr=[0,0,0].map(()=>Math.random()<p?"⭐":getSymbol());if(racha>=20 && premiosEspecialesPost20<3){if(!arr.includes("⭐")){arr[Math.floor(Math.random()*3)]="⭐";}premiosEspecialesPost20++;}return arr;}
+function getTripleOrRandom(){if(Math.random()<0.25){const s=getSymbol();return [s,s,s];}return [getSymbol(),getSymbol(),getSymbol()];}
+function girarRodillos(finalArr,onFinish){let spins=15,count=0;const int=setInterval(()=>{cells.forEach(c=>c.textContent=getSymbol());if(++count>=spins){clearInterval(int);cells.forEach((c,i)=>c.textContent=finalArr[i]);onFinish();}},80);}
+
+spinBtn.addEventListener("click",()=>{
+  if(ultimoDia===hoyISO())return;
+  let s=[],especial=false;
+  if(racha>=20){s=getSymbolsModoEspecial();especial=s.every(x=>x==="⭐");} else {s=getTripleOrRandom();}
+  girarRodillos(s,()=>{
+    const nombre=premios[s.join("")]||"Sin premio";
+    resultadoDiv.textContent=nombre;
+    resultadoDiv.className=(nombre==="Sin premio")?"sinPremio":"premio";
+    racha++; ultimoDia=hoyISO(); spinBtn.disabled=true;
+    addHistorial(`Tirada: ${nombre}`,especial);
+  });
 });
 
-document.getElementById("reiniciarBtn").addEventListener("click",()=>{
-  if(!confirm("Se reiniciará todo el progreso. ¿Continuar?")) return;
-  localStorage.clear();
-  location.reload();
+verVideoBtn.addEventListener("click", () => {
+  const hoy=hoyISO();
+  if(ultimoVideo===hoy){alert("Ya usaste el video hoy."); return;}
+  progreso=Math.min(100,progreso+5); ultimoVideo=hoy;
+  addHistorial("Video visto (+5%)"); verVideoBtn.disabled=true; guardar();
+
+  modalVideo.style.display="flex";
+  videoNoAtractivo.currentTime=0;
+  videoNoAtractivo.play();
+});
+
+function cerrarVideo(){
+  modalVideo.style.display="none";
+  videoNoAtractivo.pause();
+}
+
+cerrarModalVideoBtn.addEventListener("click", cerrarVideo);
+window.addEventListener("click",(e)=>{if(e.target===modalVideo)cerrarVideo();});
+
+verReglasBtn.addEventListener("click",()=>modalReglas.style.display="flex");
+cerrarModalBtn.addEventListener("click",()=>modalReglas.style.display="none");
+window.addEventListener("click",(e)=>{if(e.target===modalReglas)modalReglas.style.display="none";});
+
+toggleCalendarioBtn.addEventListener("click",()=>{calendarioBox.style.display=(calendarioBox.style.display==="none")?"block":"none";});
+
+reiniciarBtn.addEventListener("click",()=>{
+  if(!confirm("¿Reiniciar todo?"))return;
+  localStorage.clear(); ultimoDia=""; ultimoVideo=""; racha=0; historial=[]; premiosEspecialesPost20=0; progreso=50;
+  resultadoDiv.textContent="👉 Esperando tirada..."; resultadoDiv.className="";
+  renderHistorial(); actualizarEstadoJuego(); renderCalendario(); actualizarTablaPremios();
+});
+
+renderHistorial(); actualizarEstadoJuego(); renderCalendario(); actualizarTablaPremios();
+
 });
 </script>
+
 </body>
 </html>

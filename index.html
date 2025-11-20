@@ -11,8 +11,8 @@
   #slotContainer { display: flex; justify-content: center; margin-top: 20px; }
   .cell { width: 82px; height: 82px; background: #222; border-radius: 8px; margin: 0 6px; display: flex; justify-content: center; align-items: center; font-size: 42px; }
   #resultadoTirada { font-size: 2em; font-weight: bold; margin-top: 20px; }
-  .ganaste { color: #4caf50; }   /* verde */
-  .negacion { color: #f44336; }  /* rojo */
+  .premio { color: #4caf50; }
+  .sinPremio { color: #f44336; }
   #estadoJuego { margin-bottom: 20px; max-width: 760px; margin-left: auto; margin-right: auto; color: #fff; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; text-align: left; }
   #msgIntento { color: #ff5252; font-weight: bold; font-size: 1.05em; margin-bottom: 8px; text-align: center; }
   #historialBox { background: #222; padding: 10px; border-radius: 10px; font-size: 14px; color: #eee; max-height: 240px; overflow-y: auto; }
@@ -25,7 +25,7 @@
   table { margin: 20px auto; border-collapse: collapse; min-width: 320px; }
   th, td { border: 1px solid #0af; padding: 6px 10px; }
   th { background: #0af; color: #111; }
-  #calendarioBox { display: none; } /* oculto por defecto */
+  #calendarioBox { display: none; }
 </style>
 </head>
 <body>
@@ -70,212 +70,236 @@
 </table>
 
 <script>
-/* ===== Referencias UI ===== */
-const cells = [0,1,2].map(i => document.getElementById("c"+i));
-const resultadoDiv = document.getElementById("resultadoTirada");
-const historialDiv = document.getElementById("historialDetalles");
-const calendarioDiv = document.getElementById("calendario");
-const tablaPremios = document.getElementById("tablaPremios");
+document.addEventListener("DOMContentLoaded", () => {
 
-/* ===== Configuración del juego ===== */
-const symbolsBase = ["🍒","🍋","🔔","💎"];
-const premios = {
-  "🍒🍒🍒": "Arruinado en 1 min.",
-  "🍋🍋🍋": "Arruinado en 3 min.",
-  "🔔🔔🔔": "Arruinado en 5 min.",
-  "💎💎💎": "Arruinado en 10 min.",
-  "⭐⭐⭐": "Modo especial: 🎉 Mega premio!"
-};
+  const calendarioBox = document.getElementById("calendarioBox");
 
-/* ===== Estado persistente ===== */
-let ultimoDia = localStorage.getItem("ultimoDia") || "";
-let racha = parseInt(localStorage.getItem("racha")) || 0;
-let historial = JSON.parse(localStorage.getItem("historialDias") || "[]");
-let premiosEspecialesPost20 = parseInt(localStorage.getItem("premiosEspecialesPost20") || "0");
-let progreso = parseInt(localStorage.getItem("progreso")) || 50; // 0-100
+  const cells = [0,1,2].map(i => document.getElementById("c"+i));
+  const resultadoDiv = document.getElementById("resultadoTirada");
+  const historialDiv = document.getElementById("historialDetalles");
+  const calendarioDiv = document.getElementById("calendario");
+  const tablaPremios = document.getElementById("tablaPremios");
 
-function hoy(){
-  const d = new Date();
-  const y = d.getFullYear();
-  const m = String(d.getMonth()+1).padStart(2,"0");
-  const day = String(d.getDate()).padStart(2,"0");
-  return `${y}-${m}-${day}`;
-}
+  const spinBtn = document.getElementById("spinBtn");
+  const verVideoBtn = document.getElementById("verVideoBtn");
+  const verReglasBtn = document.getElementById("verReglasBtn");
+  const toggleCalendarioBtn = document.getElementById("toggleCalendarioBtn");
+  const reiniciarBtn = document.getElementById("reiniciarBtn");
 
-function guardar(){
-  localStorage.setItem("ultimoDia", ultimoDia);
-  localStorage.setItem("racha", racha);
-  localStorage.setItem("premiosEspecialesPost20", premiosEspecialesPost20);
-  localStorage.setItem("historialDias", JSON.stringify(historial));
-  localStorage.setItem("progreso", progreso);
-}
-
-/* ===== Render UI ===== */
-function renderHistorial(){
-  historialDiv.innerHTML = historial.map(h => {
-    const cls = h.especial ? 'premio-especial' : '';
-    return `<div class="${cls}">📅 ${h.fecha}: ${h.texto}</div>`;
-  }).join("");
-}
-
-function actualizarEstadoJuego(){
-  document.getElementById("msgIntento").textContent = (ultimoDia===hoy()) ? "Hoy ya usaste tu intento." : "";
-  document.getElementById("ultimoDiaTxt").textContent = ultimoDia || "Ninguno";
-  document.getElementById("rachaTxt").textContent = racha;
-  document.getElementById("progresoTxt").textContent = progreso;
-}
-
-function renderCalendario(){
-  calendarioDiv.innerHTML = "";
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth();
-  const diasEnMes = new Date(year, month+1, 0).getDate();
-  for(let i=1;i<=diasEnMes;i++){
-    const fStr = `${year}-${String(month+1).padStart(2,"0")}-${String(i).padStart(2,"0")}`;
-    const jugado = historial.some(h=>h.fecha===fStr);
-    calendarioDiv.innerHTML += `<div class="dia ${jugado?'jugado':''}">${i}</div>`;
+  /* === FECHAS === */
+  function formatoBonito(fechaISO){
+    const [y,m,d] = fechaISO.split("-");
+    return `${d}/${m}/${y}`;
   }
-}
 
-function actualizarTablaPremios(){
-  tablaPremios.innerHTML = "<tr><th>Combinación</th><th>Premio</th></tr>";
-  Object.entries(premios).forEach(([combo,premio])=>{
-    tablaPremios.innerHTML += `<tr><td>${combo}</td><td>${premio}</td></tr>`;
-  });
-}
-
-/* Inicialización */
-renderHistorial();
-actualizarEstadoJuego();
-renderCalendario();
-actualizarTablaPremios();
-
-/* ===== Lógica de símbolos ===== */
-function getSymbol(){ return symbolsBase[Math.floor(Math.random()*symbolsBase.length)]; }
-
-function getSymbolsModoEspecial(){
-  let probEstrella = 0.05;
-  if(racha>=25) probEstrella = 0.10;
-  if(racha>=30) probEstrella = 0.15;
-  if(racha>=35) probEstrella = 0.20;
-  const symbols = [];
-  for(let i=0;i<3;i++){ symbols.push(Math.random()<probEstrella ? "⭐" : getSymbol()); }
-  // Garantía parcial: primeras 3 tiradas tras racha >=20 aseguran al menos una ⭐ si no salió
-  if(racha>=20 && premiosEspecialesPost20<3){
-    if(!symbols.includes("⭐")) symbols[Math.floor(Math.random()*3)] = "⭐";
-    premiosEspecialesPost20++;
+  function hoyISO(){
+    const d=new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
   }
-  return symbols;
-}
 
-function getTripleOrRandom(){
-  // Sesgo suave 25% hacia triple para reducir negación
-  if(Math.random()<0.25){
-    const s = getSymbol();
-    return [s,s,s];
+  /* === Estado === */
+  const symbolsBase = ["🍒","🍋","🔔","💎"];
+
+  const premios = {
+    "🍒🍒🍒": "Arruinado en 1 min.",
+    "🍋🍋🍋": "Arruinado en 3 min.",
+    "🔔🔔🔔": "Arruinado en 5 min.",
+    "💎💎💎": "Arruinado en 10 min.",
+    "⭐⭐⭐": "Modo especial: 🎉 Mega premio!"
+  };
+
+  let ultimoDia = localStorage.getItem("ultimoDia") || "";
+  let ultimoVideo = localStorage.getItem("ultimoVideo") || "";  // NUEVO
+  let racha = parseInt(localStorage.getItem("racha")||"0");
+  let historial = JSON.parse(localStorage.getItem("historialDias")||"[]");
+  let premiosEspecialesPost20 = parseInt(localStorage.getItem("premiosEspecialesPost20")||"0");
+  let progreso = parseInt(localStorage.getItem("progreso")||"50");
+
+  function guardar(){
+    localStorage.setItem("ultimoDia", ultimoDia);
+    localStorage.setItem("ultimoVideo", ultimoVideo);   // NUEVO
+    localStorage.setItem("racha", racha);
+    localStorage.setItem("premiosEspecialesPost20", premiosEspecialesPost20);
+    localStorage.setItem("historialDias", JSON.stringify(historial));
+    localStorage.setItem("progreso", progreso);
   }
-  return [getSymbol(),getSymbol(),getSymbol()];
-}
 
-/* ===== Animación de rodillos ===== */
-function girarRodillos(finalSymbols, onFinish){
-  let spins = 15, count = 0;
-  const interval = setInterval(()=>{
-    cells.forEach(c=>c.textContent = getSymbol());
-    count++;
-    if(count>=spins){
-      clearInterval(interval);
-      cells.forEach((c,i)=>c.textContent = finalSymbols[i]);
-      if(typeof onFinish==="function") onFinish();
+  /* === Render === */
+  function renderHistorial(){
+    historialDiv.innerHTML = historial.map(h => {
+      const cls = h.especial ? 'premio-especial' : '';
+      return `<div class="${cls}">📅 ${formatoBonito(h.fecha)}: ${h.texto}</div>`;
+    }).join("");
+  }
+
+  function actualizarEstadoJuego(){
+    const hoy = hoyISO();
+    const yaJugo = ultimoDia === hoy;
+    const yaVideo = ultimoVideo === hoy;
+
+    document.getElementById("msgIntento").textContent = yaJugo ? "Hoy ya usaste tu intento." : "";
+    document.getElementById("ultimoDiaTxt").textContent = ultimoDia ? formatoBonito(ultimoDia) : "Ninguno";
+    document.getElementById("rachaTxt").textContent = racha;
+    document.getElementById("progresoTxt").textContent = progreso;
+
+    spinBtn.disabled = yaJugo;
+    verVideoBtn.disabled = yaVideo; // NUEVO
+  }
+
+  function renderCalendario(){
+    calendarioDiv.innerHTML = "";
+    const now=new Date();
+    const year=now.getFullYear();
+    const month=now.getMonth();
+    const diasEnMes=new Date(year,month+1,0).getDate();
+
+    for(let i=1;i<=diasEnMes;i++){
+      const fechaISO = `${year}-${String(month+1).padStart(2,"0")}-${String(i).padStart(2,"0")}`;
+      const jugado = historial.some(h=>h.fecha===fechaISO);
+      calendarioDiv.innerHTML += `<div class="dia ${jugado?'jugado':''}">${i}</div>`;
     }
-  },80);
-}
-
-/* ===== Utilidades ===== */
-function mostrarResultado(symbols){
-  const gano = (symbols[0]===symbols[1] && symbols[1]===symbols[2]);
-  if(gano){
-    resultadoDiv.textContent = "🎉 ¡Ganaste!";
-    resultadoDiv.className = "ganaste";
-  } else {
-    resultadoDiv.textContent = "❌ Negación";
-    resultadoDiv.className = "negacion";
-  }
-}
-
-function addHistorial(texto, especial=false){
-  historial.push({ fecha:hoy(), texto, especial });
-  renderHistorial();
-  actualizarEstadoJuego();
-  renderCalendario();
-  guardar();
-}
-
-/* ===== Eventos ===== */
-document.getElementById("spinBtn").addEventListener("click", ()=>{
-  if(ultimoDia===hoy()){ alert("Solo 1 tirada por día."); return; }
-
-  let s1, s2, s3, esEspecial = false;
-  if(racha>=20){
-    [s1,s2,s3] = getSymbolsModoEspecial();
-    esEspecial = (s1==="⭐" && s2==="⭐" && s3==="⭐");
-  } else {
-    [s1,s2,s3] = getTripleOrRandom();
   }
 
-  const symbolsFinal = [s1,s2,s3];
+  function actualizarTablaPremios(){
+    tablaPremios.innerHTML="<tr><th>Combinación</th><th>Premio</th></tr>";
+    Object.entries(premios).forEach(([c,p])=>{
+      tablaPremios.innerHTML+=`<tr><td>${c}</td><td>${p}</td></tr>`;
+    });
+  }
 
-  girarRodillos(symbolsFinal, ()=>{
-    mostrarResultado(symbolsFinal);
-    const gano = (s1===s2 && s2===s3);
-    racha++;
-    ultimoDia = hoy();
-    addHistorial(`Tirada: ${gano ? "🎉 Ganaste!" : "❌ Negación"}`, esEspecial);
+  /* === Lógica === */
+  function addHistorial(texto, especial=false){
+    historial.push({ fecha: hoyISO(), texto, especial });
+    renderHistorial();
+    actualizarEstadoJuego();
+    renderCalendario();
+    guardar();
+  }
+
+  function getSymbol(){ return symbolsBase[Math.floor(Math.random()*symbolsBase.length)]; }
+
+  function getSymbolsModoEspecial(){
+    let p=0.05;
+    if(racha>=25)p=0.10;
+    if(racha>=30)p=0.15;
+    if(racha>=35)p=0.20;
+
+    let arr=[0,0,0].map(()=>Math.random()<p?"⭐":getSymbol());
+
+    if(racha>=20 && premiosEspecialesPost20<3){
+      if(!arr.includes("⭐")) arr[Math.floor(Math.random()*3)]="⭐";
+      premiosEspecialesPost20++;
+    }
+    return arr;
+  }
+
+  function getTripleOrRandom(){
+    if(Math.random()<0.25){
+      const s=getSymbol();
+      return [s,s,s];
+    }
+    return [getSymbol(),getSymbol(),getSymbol()];
+  }
+
+  function girarRodillos(finalArr,onFinish){
+    let spins=15, count=0;
+    const int=setInterval(()=>{
+      cells.forEach(c=>c.textContent=getSymbol());
+      if(++count>=spins){
+        clearInterval(int);
+        cells.forEach((c,i)=>c.textContent=finalArr[i]);
+        onFinish();
+      }
+    },80);
+  }
+
+  /* === EVENTOS === */
+
+  // 🎰 GIRAR
+  spinBtn.addEventListener("click", ()=>{
+    if(ultimoDia===hoyISO()) return;
+
+    let s=[0,0,0], especial=false;
+    if(racha>=20){
+      s=getSymbolsModoEspecial();
+      especial = s.every(x=>x==="⭐");
+    } else {
+      s=getTripleOrRandom();
+    }
+
+    girarRodillos(s, ()=>{
+      const nombre = premios[s.join("")] || "Sin premio";
+
+      resultadoDiv.textContent = nombre;
+      resultadoDiv.className = nombre==="Sin premio" ? "sinPremio" : "premio";
+
+      racha++;
+      ultimoDia=hoyISO();
+      spinBtn.disabled=true;
+
+      addHistorial(`Tirada: ${nombre}`, especial);
+    });
   });
-});
 
-document.getElementById("verVideoBtn").addEventListener("click", ()=>{
-  progreso = Math.min(100, progreso + 5);
-  addHistorial("Video visto (+5%)");
-});
 
-document.getElementById("verReglasBtn").addEventListener("click", ()=>{
-  alert(
-    "Reglas:\n"+
-    "- Solo 1 tirada por día.\n"+
-    "- La racha aumenta en +1 cada día que juegas.\n"+
-    "- Si no juegas un día, la racha se rompe.\n"+
-    "- Racha 20 días activa el modo especial (⭐ con prob. creciente y garantía parcial al inicio).\n"+
-    "- Ganar: los 3 símbolos deben ser iguales.\n"+
-    "- Premios: 🍒🍒🍒=1min, 🍋🍋🍋=3min, 🔔🔔🔔=5min, 💎💎💎=10min, ⭐⭐⭐=Mega premio.\n"+
-    "- Ver video no atractivo: +5% de Progreso actual.\n"
-  );
-});
+  // 🎥 VIDEO NO ATRACTIVO (solo 1 vez por día)
+  verVideoBtn.addEventListener("click", ()=>{
+    const hoy = hoyISO();
 
-document.getElementById("toggleCalendarioBtn").addEventListener("click", ()=>{
-  const box = document.getElementById("calendarioBox");
-  const visible = box.style.display !== "none";
-  box.style.display = visible ? "none" : "block";
-});
+    if (ultimoVideo === hoy) {
+      alert("Solo puedes ver el video no atractivo una vez por día.");
+      return;
+    }
 
-document.getElementById("reiniciarBtn").addEventListener("click", ()=>{
-  if(!confirm("Se reiniciará todo el progreso. ¿Continuar?")) return;
-  localStorage.clear();
-  // Reset estado
-  ultimoDia = "";
-  racha = 0;
-  historial = [];
-  premiosEspecialesPost20 = 0;
-  progreso = 50;
-  // Reset UI
-  resultadoDiv.textContent = "👉 Esperando tirada...";
-  resultadoDiv.className = "";
+    progreso = Math.min(100, progreso + 5);
+    ultimoVideo = hoy;
+
+    addHistorial("Video visto (+5%)");
+    verVideoBtn.disabled = true;
+
+    guardar();
+  });
+
+  // 📜 REGLAS
+  verReglasBtn.addEventListener("click", ()=>{
+    alert("Reglas:\n- 1 tirada por día.\n- 1 video no atractivo por día.\n- Racha diaria.\n- Modo especial ⭐ desde 20 días.\n- Ganar: 3 símbolos iguales.");
+  });
+
+  // 📅 MOSTRAR/OCULTAR CALENDARIO
+  toggleCalendarioBtn.addEventListener("click", ()=>{
+    calendarioBox.style.display = calendarioBox.style.display==="none" ? "block":"none";
+  });
+
+  // 🔄 REINICIAR
+  reiniciarBtn.addEventListener("click", ()=>{
+    if(!confirm("¿Reiniciar todo?"))return;
+
+    localStorage.clear();
+
+    ultimoDia="";
+    ultimoVideo=""; // NUEVO
+    racha=0;
+    historial=[];
+    premiosEspecialesPost20=0;
+    progreso=50;
+
+    resultadoDiv.textContent="👉 Esperando tirada...";
+    resultadoDiv.className="";
+
+    renderHistorial();
+    actualizarEstadoJuego();
+    renderCalendario();
+    actualizarTablaPremios();
+
+    alert("Reiniciado.");
+  });
+
+  /* === Render inicial === */
   renderHistorial();
   actualizarEstadoJuego();
   renderCalendario();
   actualizarTablaPremios();
-  alert("Todo reiniciado.");
+
 });
 </script>
 </body>
