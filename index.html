@@ -4,6 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Tragaperras Negación Erótica</title>
+
 <style>
   body { background: #111; color: #fff; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; text-align: center; padding: 20px; }
   button { padding: 10px 16px; margin: 5px; border: none; border-radius: 8px; background: #0af; color: #111; font-weight: 700; cursor: pointer; }
@@ -13,21 +14,18 @@
   #resultadoTirada { font-size: 2em; font-weight: bold; margin-top: 20px; }
   .premio { color: #4caf50; }
   .sinPremio { color: #f44336; }
-  #estadoJuego { margin-bottom: 20px; max-width: 760px; margin-left: auto; margin-right: auto; color: #fff; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; text-align: left; }
-  #msgIntento { color: #ff5252; font-weight: bold; font-size: 1.05em; margin-bottom: 8px; text-align: center; }
   #historialBox { background: #222; padding: 10px; border-radius: 10px; font-size: 14px; color: #eee; max-height: 240px; overflow-y: auto; }
-  #historialBox h3 { margin-top: 0; font-weight: bold; text-align: center; }
-  #historialDetalles div { margin: 4px 0; }
-  .premio-especial { background-color: #ffe55c; color: #000; font-weight: bold; padding: 2px 4px; border-radius: 4px; }
   #calendario { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: 12px; }
   .dia { background: #333; padding: 8px; border-radius: 6px; }
   .jugado { background: #0af; color: #111; font-weight: bold; }
+  #modalVideo { display: none !important; position: fixed !important; z-index: 100000 !important; left: 0; top: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.75) !important; justify-content: center; align-items: center; }
+  #modalVideo .modal-content { background: #222; padding: 20px; border-radius: 10px; width: 90%; max-width: 450px; }
   table { margin: 20px auto; border-collapse: collapse; min-width: 320px; }
   th, td { border: 1px solid #0af; padding: 6px 10px; }
   th { background: #0af; color: #111; }
-  #calendarioBox { display: none; }
 </style>
 </head>
+
 <body>
 <h1>🎰 Negación Erótica</h1>
 
@@ -51,15 +49,15 @@
 
 <div id="resultadoTirada">👉 Esperando tirada...</div>
 
-<br />
+<br/>
 
 <button id="spinBtn">🎰 Girar</button>
 <button id="verVideoBtn">🎥 Ver video no atractivo (+5)</button>
-<button id="verReglasBtn">📜 Ver Reglas</button>
+<button id="verReglasBtn">📜 Reglas</button>
 <button id="toggleCalendarioBtn">📅 Mostrar/Ocultar Calendario</button>
 <button id="reiniciarBtn">🔄 Reiniciar</button>
 
-<div id="calendarioBox">
+<div id="calendarioBox" style="display:none;">
   <h3>📅 Calendario de progreso</h3>
   <div id="calendario"></div>
 </div>
@@ -69,11 +67,20 @@
   <tr><th>Combinación</th><th>Premio</th></tr>
 </table>
 
+<!-- MODAL VIDEO -->
+<div id="modalVideo">
+  <div class="modal-content">
+    <h2 style="text-align:center; color:#0af;">Vídeo</h2>
+    <video id="videoNoAtractivo" controls preload="auto" style="width:100%; background:black;">
+      <source src="video.mp4" type="video/mp4">
+      Tu navegador no soporta video HTML5.
+    </video>
+    <button id="cerrarModalVideoBtn" style="width:100%; margin-top:12px;">Cerrar</button>
+  </div>
+</div>
+
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-
-  const calendarioBox = document.getElementById("calendarioBox");
-
   const cells = [0,1,2].map(i => document.getElementById("c"+i));
   const resultadoDiv = document.getElementById("resultadoTirada");
   const historialDiv = document.getElementById("historialDetalles");
@@ -86,220 +93,131 @@ document.addEventListener("DOMContentLoaded", () => {
   const toggleCalendarioBtn = document.getElementById("toggleCalendarioBtn");
   const reiniciarBtn = document.getElementById("reiniciarBtn");
 
-  /* === FECHAS === */
-  function formatoBonito(fechaISO){
-    const [y,m,d] = fechaISO.split("-");
-    return `${d}/${m}/${y}`;
-  }
+  const modalVideo = document.getElementById("modalVideo");
+  const cerrarModalVideoBtn = document.getElementById("cerrarModalVideoBtn");
+  const videoNoAtractivo = document.getElementById("videoNoAtractivo");
 
-  function hoyISO(){
-    const d=new Date();
-    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
-  }
-
-  /* === Estado === */
   const symbolsBase = ["🍒","🍋","🔔","💎"];
+  const premios = {"🍒🍒🍒":"Arruinado en 1 min.","🍋🍋🍋":"Arruinado en 3 min.","🔔🔔🔔":"Arruinado en 5 min.","💎💎💎":"Arruinado en 10 min.","⭐⭐⭐":"Mega premio"};
 
-  const premios = {
-    "🍒🍒🍒": "Arruinado en 1 min.",
-    "🍋🍋🍋": "Arruinado en 3 min.",
-    "🔔🔔🔔": "Arruinado en 5 min.",
-    "💎💎💎": "Arruinado en 10 min.",
-    "⭐⭐⭐": "Modo especial: 🎉 Mega premio!"
-  };
+  function hoyISO(){ const d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+  function hoyES(){ const d=new Date(); return d.getDate()+"/"+(d.getMonth()+1)+"/"+d.getFullYear(); }
+  function formatearFecha(iso){ const [y,m,d]=iso.split("-"); return `${d}/${m}/${y}`; }
 
   let ultimoDia = localStorage.getItem("ultimoDia") || "";
-  let ultimoVideo = localStorage.getItem("ultimoVideo") || "";  // NUEVO
-  let racha = parseInt(localStorage.getItem("racha")||"0");
-  let historial = JSON.parse(localStorage.getItem("historialDias")||"[]");
-  let premiosEspecialesPost20 = parseInt(localStorage.getItem("premiosEspecialesPost20")||"0");
-  let progreso = parseInt(localStorage.getItem("progreso")||"50");
+  let ultimoVideo = localStorage.getItem("ultimoVideo") || "";
+  let racha = parseInt(localStorage.getItem("racha") || "0");
+  let progreso = parseInt(localStorage.getItem("progreso") || "50");
+  let historial = JSON.parse(localStorage.getItem("historial") || "[]");
 
-  function guardar(){
-    localStorage.setItem("ultimoDia", ultimoDia);
-    localStorage.setItem("ultimoVideo", ultimoVideo);   // NUEVO
-    localStorage.setItem("racha", racha);
-    localStorage.setItem("premiosEspecialesPost20", premiosEspecialesPost20);
-    localStorage.setItem("historialDias", JSON.stringify(historial));
-    localStorage.setItem("progreso", progreso);
+  function guardar(){ 
+    localStorage.setItem("ultimoDia", ultimoDia); 
+    localStorage.setItem("ultimoVideo", ultimoVideo); 
+    localStorage.setItem("racha", racha); 
+    localStorage.setItem("historial", JSON.stringify(historial)); 
+    localStorage.setItem("progreso", progreso); 
   }
 
-  /* === Render === */
-  function renderHistorial(){
-    historialDiv.innerHTML = historial.map(h => {
-      const cls = h.especial ? 'premio-especial' : '';
-      return `<div class="${cls}">📅 ${formatoBonito(h.fecha)}: ${h.texto}</div>`;
-    }).join("");
+  function renderHistorial(){ 
+    historialDiv.innerHTML = historial.map(h => `<div>📅 ${h.fecha}: ${h.texto}</div>`).join(""); 
   }
 
-  function actualizarEstadoJuego(){
-    const hoy = hoyISO();
-    const yaJugo = ultimoDia === hoy;
-    const yaVideo = ultimoVideo === hoy;
-
-    document.getElementById("msgIntento").textContent = yaJugo ? "Hoy ya usaste tu intento." : "";
-    document.getElementById("ultimoDiaTxt").textContent = ultimoDia ? formatoBonito(ultimoDia) : "Ninguno";
+  function actualizarEstado(){
+    document.getElementById("ultimoDiaTxt").textContent = ultimoDia ? formatearFecha(ultimoDia) : "Ninguno";
     document.getElementById("rachaTxt").textContent = racha;
     document.getElementById("progresoTxt").textContent = progreso;
 
-    spinBtn.disabled = yaJugo;
-    verVideoBtn.disabled = yaVideo; // NUEVO
+    // DESACTIVAR BOTÓN GIRAR SI YA SE HIZO TIRADA
+    spinBtn.disabled = (ultimoDia === hoyISO());
   }
 
   function renderCalendario(){
     calendarioDiv.innerHTML = "";
-    const now=new Date();
-    const year=now.getFullYear();
-    const month=now.getMonth();
-    const diasEnMes=new Date(year,month+1,0).getDate();
-
-    for(let i=1;i<=diasEnMes;i++){
-      const fechaISO = `${year}-${String(month+1).padStart(2,"0")}-${String(i).padStart(2,"0")}`;
-      const jugado = historial.some(h=>h.fecha===fechaISO);
-      calendarioDiv.innerHTML += `<div class="dia ${jugado?'jugado':''}">${i}</div>`;
+    const now = new Date(), y=now.getFullYear(), m=now.getMonth(), dias=new Date(y,m+1,0).getDate();
+    for(let i=1;i<=dias;i++){
+      const fISO = `${y}-${String(m+1).padStart(2,"0")}-${String(i).padStart(2,"0")}`;
+      const jugado = historial.some(h => h.iso === fISO);
+      calendarioDiv.innerHTML += `<div class="dia ${jugado?"jugado":""}">${i}</div>`;
     }
   }
 
-  function actualizarTablaPremios(){
-    tablaPremios.innerHTML="<tr><th>Combinación</th><th>Premio</th></tr>";
-    Object.entries(premios).forEach(([c,p])=>{
-      tablaPremios.innerHTML+=`<tr><td>${c}</td><td>${p}</td></tr>`;
-    });
-  }
-
-  /* === Lógica === */
-  function addHistorial(texto, especial=false){
-    historial.push({ fecha: hoyISO(), texto, especial });
-    renderHistorial();
-    actualizarEstadoJuego();
-    renderCalendario();
+  function addHistorial(texto){
+    const fISO=hoyISO();
+    historial.push({iso:fISO, fecha:hoyES(), texto});
     guardar();
+    renderHistorial();
+    actualizarEstado();
+    renderCalendario();
   }
 
   function getSymbol(){ return symbolsBase[Math.floor(Math.random()*symbolsBase.length)]; }
 
-  function getSymbolsModoEspecial(){
-    let p=0.05;
-    if(racha>=25)p=0.10;
-    if(racha>=30)p=0.15;
-    if(racha>=35)p=0.20;
-
-    let arr=[0,0,0].map(()=>Math.random()<p?"⭐":getSymbol());
-
-    if(racha>=20 && premiosEspecialesPost20<3){
-      if(!arr.includes("⭐")) arr[Math.floor(Math.random()*3)]="⭐";
-      premiosEspecialesPost20++;
-    }
-    return arr;
-  }
-
-  function getTripleOrRandom(){
-    if(Math.random()<0.25){
-      const s=getSymbol();
-      return [s,s,s];
-    }
-    return [getSymbol(),getSymbol(),getSymbol()];
-  }
-
-  function girarRodillos(finalArr,onFinish){
-    let spins=15, count=0;
-    const int=setInterval(()=>{
+  function girarRodillos(finalSymbols, callback){
+    let n=15,c=0;
+    const i=setInterval(()=>{
       cells.forEach(c=>c.textContent=getSymbol());
-      if(++count>=spins){
-        clearInterval(int);
-        cells.forEach((c,i)=>c.textContent=finalArr[i]);
-        onFinish();
-      }
+      c++;
+      if(c>=n){ clearInterval(i); cells.forEach((c,i)=>c.textContent=finalSymbols[i]); callback(); }
     },80);
   }
 
-  /* === EVENTOS === */
-
-  // 🎰 GIRAR
   spinBtn.addEventListener("click", ()=>{
-    if(ultimoDia===hoyISO()) return;
-
-    let s=[0,0,0], especial=false;
-    if(racha>=20){
-      s=getSymbolsModoEspecial();
-      especial = s.every(x=>x==="⭐");
-    } else {
-      s=getTripleOrRandom();
-    }
-
+    if(ultimoDia===hoyISO()){ alert("Solo 1 tirada por día."); return; }
+    const s=[getSymbol(),getSymbol(),getSymbol()];
     girarRodillos(s, ()=>{
-      const nombre = premios[s.join("")] || "Sin premio";
-
-      resultadoDiv.textContent = nombre;
-      resultadoDiv.className = nombre==="Sin premio" ? "sinPremio" : "premio";
-
+      const combo = s.join("");
+      const premio = premios[combo] || null;
+      resultadoDiv.textContent = premio || "Sin premio";
+      resultadoDiv.className = premio?"premio":"sinPremio";
+      ultimoDia = hoyISO();
       racha++;
-      ultimoDia=hoyISO();
-      spinBtn.disabled=true;
-
-      addHistorial(`Tirada: ${nombre}`, especial);
+      addHistorial(`Tirada: ${premio || "Sin premio"}`);
+      spinBtn.disabled = true;
+      guardar();
     });
   });
 
-
-  // 🎥 VIDEO NO ATRACTIVO (solo 1 vez por día)
-  verVideoBtn.addEventListener("click", ()=>{
-    const hoy = hoyISO();
-
-    if (ultimoVideo === hoy) {
-      alert("Solo puedes ver el video no atractivo una vez por día.");
-      return;
-    }
-
-    progreso = Math.min(100, progreso + 5);
-    ultimoVideo = hoy;
-
-    addHistorial("Video visto (+5%)");
-    verVideoBtn.disabled = true;
-
-    guardar();
-  });
-
-  // 📜 REGLAS
   verReglasBtn.addEventListener("click", ()=>{
-    alert("Reglas:\n- 1 tirada por día.\n- 1 video no atractivo por día.\n- Racha diaria.\n- Modo especial ⭐ desde 20 días.\n- Ganar: 3 símbolos iguales.");
+    alert(`Reglas:\n- Solo 1 tirada por día.\n- La racha aumenta cada día jugado.\n- Si no juegas un día, se pierde la racha.\n- Para ganar, los 3 símbolos deben ser iguales.\n- Puedes ver el video no atractivo una vez al día (+5% progreso).`);
   });
 
-  // 📅 MOSTRAR/OCULTAR CALENDARIO
   toggleCalendarioBtn.addEventListener("click", ()=>{
-    calendarioBox.style.display = calendarioBox.style.display==="none" ? "block":"none";
+    const box=document.getElementById("calendarioBox");
+    box.style.display = box.style.display==="none"?"block":"none";
   });
 
-  // 🔄 REINICIAR
   reiniciarBtn.addEventListener("click", ()=>{
-    if(!confirm("¿Reiniciar todo?"))return;
-
-    localStorage.clear();
-
-    ultimoDia="";
-    ultimoVideo=""; // NUEVO
-    racha=0;
-    historial=[];
-    premiosEspecialesPost20=0;
-    progreso=50;
-
-    resultadoDiv.textContent="👉 Esperando tirada...";
-    resultadoDiv.className="";
-
-    renderHistorial();
-    actualizarEstadoJuego();
-    renderCalendario();
-    actualizarTablaPremios();
-
-    alert("Reiniciado.");
+    if(confirm("¿Seguro?")){ localStorage.clear(); location.reload(); }
   });
 
-  /* === Render inicial === */
+  verVideoBtn.addEventListener("click", ()=>{
+    if(ultimoVideo===hoyISO()){ alert("Ya usaste el video hoy."); return; }
+    progreso=Math.min(100,progreso+5);
+    ultimoVideo=hoyISO();
+    verVideoBtn.disabled=true;
+    addHistorial("Video visto (+5%)");
+    guardar();
+    modalVideo.style.setProperty("display","flex","important");
+    videoNoAtractivo.currentTime=0;
+    videoNoAtractivo.play();
+  });
+
+  function cerrarVideo(){ modalVideo.style.display="none"; videoNoAtractivo.pause(); }
+  cerrarModalVideoBtn.addEventListener("click", cerrarVideo);
+  window.addEventListener("click", e=>{ if(e.target===modalVideo) cerrarVideo(); });
+
+  function actualizarTablaPremios(){
+    tablaPremios.innerHTML = "<tr><th>Combinación</th><th>Premio</th></tr>";
+    Object.entries(premios).forEach(([combo, texto])=>{
+      tablaPremios.innerHTML += `<tr><td>${combo}</td><td>${texto}</td></tr>`;
+    });
+  }
+
+  // Render inicial
   renderHistorial();
-  actualizarEstadoJuego();
+  actualizarEstado();
   renderCalendario();
   actualizarTablaPremios();
-
 });
 </script>
 </body>
