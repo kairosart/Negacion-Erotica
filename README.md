@@ -40,3 +40,17 @@ y además ahora influye en la posibilidad de que salgan **tres iguales**.
 
 ## 🎥 Acción extra
 Puedes ver un video “no atractivo” para subir tu Probabilidad actual en **+5%**.
+
+
+
+## 📜 Reglas del juego
+
+| 📌 Aspecto               | ⚙️ Regla / Efecto |
+|--------------------------|-------------------|
+| 🎰 **Intentos diarios**  | Solo 1 tirada por día. Si intentas más, se bloquea. |
+| 🔄 **Racha de juego**    | Cada día jugado: +1 racha. Si no juegas un día: la racha se rompe y −10% de probabilidad. |
+| 📈 **Bonificaciones de racha** | Día 5: +3% prob. · Día 10: +6% prob. · Día 20: activa Modo Especial ⭐ |
+| ⭐ **Modo Especial**      | Desde racha 20: aparece ⭐ con probabilidad creciente (5% → 20%). Tres ⭐⭐⭐ = **Mega premio especial**. |
+| 🏆 **Condición de victoria** | Solo hay premio si los tres símbolos son iguales (🍒🍒🍒, 🍋🍋🍋, 🔔🔔🔔, 💎💎💎). |
+| 📊 **Probabilidad actual** | Empieza en 50. Cambios: Ganar +0.2 · Perder −0.05 · Video +5 · No jugar −10. |
+| 🎥 **Acción extra**      | Ver video “no atractivo” = +5% de probabilidad actual. |
