@@ -1,290 +1,246 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tragaperras Animadas — Sistema Diario + Modo Especial</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Tragaperras Negación Erótica</title>
 <style>
-body{
-  background:#111;
-  color:#fff;
-  font-family: system-ui;
-  padding:20px;
-  text-align:center;
-}
-.card{
-  background:#222;
-  padding:16px;
-  border-radius:10px;
-  margin:10px auto;
-  max-width:600px;
-}
-#slotContainer{
-  padding:20px;
-  background:#000;
-  border-radius:12px;
-  display:inline-block;
-  margin-top:20px;
-  position:relative;
-  overflow:hidden;
-  height:90px;
-}
-.grid3{
-  display:grid;
-  grid-template-columns:repeat(3,80px);
-  grid-gap:10px;
-  justify-content:center;
-}
-.cell{
-  width:80px;
-  height:80px;
-  background:#333;
-  border-radius:8px;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  font-size:40px;
-  transition: transform 0.3s;
-}
-button{
-  padding:10px 16px;
-  border:none;
-  border-radius:8px;
-  background:#0af;
-  color:white;
-  font-weight:bold;
-  cursor:pointer;
-  margin:5px;
-}
-button:disabled{
-  background:#555;
-  cursor:not-allowed;
-}
-.modo-especial-marco{
-  border:6px solid gold;
-  box-shadow:0 0 20px gold, 0 0 40px goldenrod;
-  animation:brilloMarco 2s infinite alternate;
-}
-@keyframes brilloMarco{
-  0%{ box-shadow:0 0 10px gold; }
-  100%{ box-shadow:0 0 35px rgb(255,215,0); }
-}
-.luces-arcade{
-  position:relative;
-}
-.luces-arcade::before,
-.luces-arcade::after{
-  content:"";
-  position:absolute;
-  height:8px;
-  width:100%;
-  left:0;
-  background:linear-gradient(
-    90deg,
-    red, orange, yellow, lime, cyan, blue, purple, red
-  );
-  background-size:400% 100%;
-  animation:lucesArcade 3s linear infinite;
-}
-.luces-arcade::before{ top:-14px; }
-.luces-arcade::after{ bottom:-14px; }
-@keyframes lucesArcade{
-  0%{ background-position:0%; }
-  100%{ background-position:400%; }
-}
-#msg{
-  font-size:1.2em;
-  font-weight:bold;
-}
+  body { background: #111; color: #fff; font-family: system-ui; text-align: center; padding: 20px; }
+  button { padding: 10px 16px; margin: 5px; border: none; border-radius: 8px; background: #0af; color: #fff; font-weight: bold; cursor: pointer; }
+  button:disabled { background: #555; cursor: not-allowed; }
+  #slotContainer { display: flex; justify-content: center; margin-top: 20px; }
+  .cell { width: 80px; height: 80px; background: #222; border-radius: 8px; margin: 0 5px; display: flex; justify-content: center; align-items: center; font-size: 40px; transition: transform 0.3s; }
+  #estadoJuego { margin-bottom: 20px; max-width: 700px; margin-left: auto; margin-right: auto; color: #fff; font-family: monospace; text-align: left; }
+  #msgIntento { color: #ff5252; font-weight: bold; font-size: 1.1em; margin-bottom: 8px; text-align: center; }
+  #historialBox { background: #222; padding: 10px; border-radius: 10px; font-size: 14px; color: #eee; max-height: 220px; overflow-y: auto; }
+  #historialBox h3 { margin-top: 0; font-weight: bold; text-align: center; }
+  #historialDetalles div { margin: 4px 0; }
+  .premio-especial { background-color: yellow; color: #000; font-weight: bold; padding: 2px 4px; border-radius: 4px; }
+  #calendario { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: 20px; }
+  .dia { background: #333; padding: 8px; border-radius: 6px; }
+  .jugado { background: #0af; color: #111; font-weight: bold; }
+  table { margin: 20px auto; border-collapse: collapse; }
+  th, td { border: 1px solid #0af; padding: 6px 10px; }
+  th { background: #0af; color: #111; }
 </style>
 </head>
 <body>
-<h1>🎰 Negación Erótica — Sistema Diario</h1>
-<audio id="modoMusica" src="arcade_theme.mp3"></audio>
+<h1>🎰 Negación Erótica</h1>
+
+<div id="estadoJuego">
+  <p id="msgIntento"></p>
+  <p>Último día jugado: <span id="ultimoDiaTxt"></span></p>
+  <p>Racha: <span id="rachaTxt"></span> días</p>
+  <p>Progreso actual: <span id="progresoTxt"></span>%</p>
+
+  <div id="historialBox">
+    <h3>Historial de días</h3>
+    <div id="historialDetalles"></div>
+  </div>
+</div>
+
 <div id="slotContainer">
-  <div class="grid3" id="grid"></div>
+  <div class="cell" id="c0">🍒</div>
+  <div class="cell" id="c1">🍋</div>
+  <div class="cell" id="c2">🔔</div>
 </div>
-<br>
+
+<br />
+
 <button id="spinBtn">🎰 Girar</button>
-<button id="verVideoBtn">🎥 Ver video no atractivo (+5%)</button>
-<button id="resetBtn">🔄 Reiniciar</button>
-<button id="verReglasBtn">📖 Ver Reglas</button>
-<p id="msg"></p>
-<p id="stats"></p>
-<p id="racha"></p>
-<p id="prob"></p>
-<div class="card">
-  <h3>Historial de días</h3>
-  <div id="historial"></div>
-</div>
+<button id="verVideoBtn">🎥 Ver video no atractivo (+5)</button>
+<button id="verReglasBtn">📜 Ver Reglas</button>
+<button id="reiniciarBtn">🔄 Reiniciar</button>
+
+<h3>📅 Calendario de progreso</h3>
+<div id="calendario"></div>
+
+<h3>🏆 Tabla de Premios</h3>
+<table id="tablaPremios">
+  <tr><th>Combinación</th><th>Premio</th></tr>
+</table>
 
 <script>
-const grid = document.getElementById("grid");
-const msg = document.getElementById("msg");
-const stats = document.getElementById("stats");
-const probTxt = document.getElementById("prob");
-const rachaTxt = document.getElementById("racha");
-const historialDiv = document.getElementById("historial");
+/* ===== Estado y persistencia ===== */
+const cells = [0,1,2].map(i => document.getElementById("c"+i));
+const historialDiv = document.getElementById("historialDetalles");
+const calendarioDiv = document.getElementById("calendario");
+const tablaPremios = document.getElementById("tablaPremios");
 
-let modoEspecial = localStorage.getItem("modoEspecial") === "true";
 let symbolsBase = ["🍒","🍋","🔔","💎"];
-let prob = parseFloat(localStorage.getItem("prob")) || 50;
+let premios = {
+  "🍒🍒🍒":"Arruinado en 1 min.",
+  "🍋🍋🍋":"Arruinado en 3 min.",
+  "🔔🔔🔔":"Arruinado en 5 min.",
+  "💎💎💎":"Arruinado en 10 min.",
+  "⭐⭐⭐":"Modo especial: 🎉 Mega premio!"
+};
+
 let ultimoDia = localStorage.getItem("ultimoDia") || "";
 let racha = parseInt(localStorage.getItem("racha")) || 0;
-let historial = JSON.parse(localStorage.getItem("historialDias") || "[]");
-let videoVistoHoy = localStorage.getItem("videoVistoHoy") === (new Date().toISOString().split("T")[0]);
+let historial = JSON.parse(localStorage.getItem("historialDias")||"[]");
+let premiosEspecialesPost20 = parseInt(localStorage.getItem("premiosEspecialesPost20")||"0");
+let progreso = parseInt(localStorage.getItem("progreso")) || 50; // marcador acumulativo 0-100
 
-function hoy(){ return new Date().toISOString().split("T")[0]; }
-
-function guardar(){
-  localStorage.setItem("prob", prob);
-  localStorage.setItem("ultimoDia", ultimoDia);
-  localStorage.setItem("racha", racha);
-  localStorage.setItem("modoEspecial", modoEspecial);
-  localStorage.setItem("historialDias", JSON.stringify(historial));
-  localStorage.setItem("videoVistoHoy", videoVistoHoy ? hoy() : "");
+function hoy(){
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,"0");
+  const day = String(d.getDate()).padStart(2,"0");
+  return `${y}-${m}-${day}`;
 }
 
-function addHistorial(texto){
-  historial.push({fecha:hoy(), texto});
-  localStorage.setItem("historialDias", JSON.stringify(historial));
+function guardar(){
+  localStorage.setItem("ultimoDia",ultimoDia);
+  localStorage.setItem("racha",racha);
+  localStorage.setItem("premiosEspecialesPost20",premiosEspecialesPost20);
+  localStorage.setItem("historialDias",JSON.stringify(historial));
+  localStorage.setItem("progreso",progreso);
+}
+
+/* ===== UI ===== */
+function addHistorial(texto, especial=false){
+  historial.push({ fecha:hoy(), texto, especial});
   renderHistorial();
+  actualizarEstadoJuego();
+  renderCalendario();
+  guardar();
 }
 
 function renderHistorial(){
-  historialDiv.innerHTML = historial.map(h=>`<div>📅 ${h.fecha}: ${h.texto}</div>`).join("");
+  historialDiv.innerHTML = historial.map(h => {
+    const cls = h.especial ? 'premio-especial' : '';
+    return `<div class="${cls}">📅 ${h.fecha}: ${h.texto}</div>`;
+  }).join("");
 }
 
-function activarModoEspecial(){
-  const slot = document.getElementById("slotContainer");
-  slot.classList.add("modo-especial-marco");
-  slot.classList.add("luces-arcade");
-  const audio = document.getElementById("modoMusica");
-  audio.loop=true; audio.play();
-  modoEspecial = true;
-  addHistorial("Modo Especial desbloqueado");
-  guardar();
+function actualizarEstadoJuego(){
+  document.getElementById("msgIntento").textContent = (ultimoDia===hoy()) ? "Hoy ya usaste tu intento." : "";
+  document.getElementById("ultimoDiaTxt").textContent = ultimoDia||"Ninguno";
+  document.getElementById("rachaTxt").textContent = racha;
+  document.getElementById("progresoTxt").textContent = progreso;
 }
 
-if(modoEspecial) activarModoEspecial();
-
-for(let i=0;i<3;i++){
-  const c=document.createElement("div"); c.className="cell"; c.id="c"+i; grid.appendChild(c);
-}
-
-function getSymbol(){
-  if(modoEspecial && Math.random()<0.05) return "⭐";
-  if(Math.random()<0.01) return "💎"; // 1% chance de Jackpot
-  return symbolsBase[Math.floor(Math.random()*symbolsBase.length)];
-}
-
-function evaluate(a,b,c){
-  // Jackpot
-  if(a==="💎" && b==="💎" && c==="💎") return 1000;
-  if(a===b && b===c && a==="⭐") return 999;
-  if(a===b && b===c) return 100;
-  if(a===b || b===c) return 10;
-  return 0;
-}
-
-function intentoDisponible(){ return ultimoDia!==hoy(); }
-
-function actualizarRacha(){
-  const ayer = new Date(); ayer.setDate(ayer.getDate()-1);
-  const ayerStr = ayer.toISOString().split("T")[0];
-  if(ultimoDia===ayerStr) racha++;
-  else { 
-    if(ultimoDia!==hoy()){ 
-      racha=0; prob-=10; if(prob<0)prob=0; addHistorial("Racha rota (–10% prob.)"); 
-    }
+function renderCalendario(){
+  calendarioDiv.innerHTML="";
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const diasEnMes = new Date(year, month+1, 0).getDate();
+  for(let i=1;i<=diasEnMes;i++){
+    const fStr = `${year}-${String(month+1).padStart(2,"0")}-${String(i).padStart(2,"0")}`;
+    const jugado = historial.some(h=>h.fecha===fStr);
+    calendarioDiv.innerHTML += `<div class="dia ${jugado?'jugado':''}">${i}</div>`;
   }
-  if(racha===5){ prob+=5; addHistorial("+5% por 5 días consecutivos"); }
-  if(racha===10){ prob+=10; addHistorial("+10% por 10 días consecutivos"); }
-  if(racha===20 && !modoEspecial) activarModoEspecial();
-  guardar();
+}
+
+function actualizarTablaPremios(){
+  tablaPremios.innerHTML = "<tr><th>Combinación</th><th>Premio</th></tr>";
+  Object.entries(premios).forEach(([combo,premio])=>{
+    tablaPremios.innerHTML += `<tr><td>${combo}</td><td>${premio}</td></tr>`;
+  });
+}
+
+/* Inicialización UI */
+renderHistorial();
+actualizarEstadoJuego();
+renderCalendario();
+actualizarTablaPremios();
+
+/* ===== Lógica del juego ===== */
+function getSymbol(){ return symbolsBase[Math.floor(Math.random()*symbolsBase.length)]; }
+
+function getSymbolsModoEspecial(){
+  let probEstrella=0.05;
+  if(racha>=25) probEstrella=0.10;
+  if(racha>=30) probEstrella=0.15;
+  if(racha>=35) probEstrella=0.20;
+  let symbols = [];
+  for(let i=0;i<3;i++){ symbols.push(Math.random()<probEstrella ? "⭐" : getSymbol()); }
+  // Garantía de ⭐ en las primeras 3 tiradas post-20 si no salió
+  if(racha>=20 && premiosEspecialesPost20<3){
+    if(!symbols.includes("⭐")) symbols[Math.floor(Math.random()*3)]="⭐";
+    premiosEspecialesPost20++;
+  }
+  return symbols;
+}
+
+function getTripleOrRandom(){
+  // Sesgo fijo 25% hacia tres iguales para reducir la negación
+  if(Math.random()<0.25){
+    const s=getSymbol();
+    return [s,s,s];
+  }
+  return [getSymbol(),getSymbol(),getSymbol()];
 }
 
 function girarRodillos(finalSymbols){
-  const spins = 15;
-  const delay = 80;
-  let count = 0;
-  const interval = setInterval(()=>{
-    for(let i=0;i<3;i++){
-      const sym = symbolsBase[Math.floor(Math.random()*symbolsBase.length)];
-      document.getElementById("c"+i).textContent=sym;
-    }
+  let spins=15,count=0;
+  const interval=setInterval(()=>{
+    cells.forEach(c=>c.textContent=getSymbol());
     count++;
     if(count>=spins){
       clearInterval(interval);
-      for(let i=0;i<3;i++){
-        document.getElementById("c"+i).textContent=finalSymbols[i];
-      }
+      cells.forEach((c,i)=>c.textContent=finalSymbols[i]);
     }
-  },delay);
+  },80);
 }
 
-document.getElementById("spinBtn").onclick=()=>{
-  if(!intentoDisponible()){ msg.textContent="Hoy ya usaste tu intento."; msg.style.color="red"; return; }
-  actualizarRacha();
-  const a=getSymbol(), b=getSymbol(), c=getSymbol();
-  girarRodillos([a,b,c]);
-  const premio=evaluate(a,b,c);
-  const dado=Math.random()*100;
-  
-  if(premio===1000){
-    msg.innerHTML = "🎉 JACKPOT! 💎💎💎";
-    msg.style.color = "gold";
-    addHistorial("JACKPOT");
-  } else if(dado<prob){ 
-    msg.textContent=`✔ Permitido (${dado.toFixed(2)} < ${prob}%)`; 
-    msg.style.color="lime";
-    addHistorial("Permitido"); 
+/* ===== Eventos ===== */
+document.getElementById("spinBtn").addEventListener("click",()=>{
+  if(ultimoDia===hoy()){ alert("Solo 1 tirada por día."); return; }
+
+  let s1,s2,s3, esEspecial=false;
+  if(racha>=20){
+    [s1,s2,s3]=getSymbolsModoEspecial();
+    esEspecial=(s1==="⭐"&&s2==="⭐"&&s3==="⭐");
+  } else {
+    [s1,s2,s3]=getTripleOrRandom();
   }
-  else{ 
-    msg.textContent=`✘ Negado (${dado.toFixed(2)} ≥ ${prob}%)`; 
-    msg.style.color="red";
-    addHistorial("Negado"); 
-  }
-  
-  prob-=10; if(prob<0)prob=0;
+
+  girarRodillos([s1,s2,s3]);
+
+  const combo = s1+s2+s3;
+  const gano = (s1===s2 && s2===s3);
+
+  racha++;
   ultimoDia=hoy();
-  guardar(); actualizarUI();
-};
 
-document.getElementById("verVideoBtn").onclick = () => {
-  if(videoVistoHoy){ alert("Ya viste tu video hoy."); return; }
-  const videoURL = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
-  const videoWindow = window.open(videoURL,"Video","width=800,height=450");
-  const checkClosed = setInterval(() => {
-    if(videoWindow.closed){
-      clearInterval(checkClosed);
-      prob +=5; if(prob>100) prob=100;
-      addHistorial("+5% por ver video no atractivo");
-      videoVistoHoy = true;
-      guardar();
-      actualizarUI();
-      msg.textContent="✔ Video completado (+5%)";
-      msg.style.color="lime";
-    }
-  },1000);
-};
+  addHistorial(`Tirada: ${combo} ${gano?"🎉 Ganaste!":"❌ Negación"}`, esEspecial);
+});
 
-document.getElementById("resetBtn").onclick=()=>{
-  localStorage.clear(); location.reload();
-};
+document.getElementById("verVideoBtn").addEventListener("click",()=>{
+  // Sube el progreso en +5 (máximo 100)
+  progreso += 5;
+  if(progreso > 100) progreso = 100;
+  addHistorial("Video visto (+5%)");
+  actualizarEstadoJuego();
+  guardar();
+});
 
-document.getElementById("verReglasBtn").onclick = () => {
-  alert("🎰 Reglas del juego:\n\n- Una tirada diaria.\n- Permitido o Negado según probabilidad.\n- Ver un video no atractivo suma +5%.\n- Rachas de 5 y 10 días aumentan probabilidad.\n- 20 días desbloquean Modo Especial.\n- Jackpot: 💎💎💎");
-};
+document.getElementById("verReglasBtn").addEventListener("click",()=>{
+  alert(
+    "Reglas:\n"+
+    "- Solo 1 tirada por día.\n"+
+    "- La racha aumenta en +1 cada día que juegas.\n"+
+    "- Si no juegas un día, la racha se rompe.\n"+
+    "- Racha 20 días activa el modo especial (⭐ con prob. creciente y garantía parcial al inicio).\n"+
+    "- Ganar: los 3 símbolos deben ser iguales.\n"+
+    "- Premios:\n"+
+    "  🍒🍒🍒 → Arruinado en 1 minuto.\n"+
+    "  🍋🍋🍋 → Arruinado en 3 minutos.\n"+
+    "  🔔🔔🔔 → Arruinado en 5 minutos.\n"+
+    "  💎💎💎 → Arruinado en 10 minutos.\n"+
+    "  ⭐⭐⭐ → Modo especial: Mega premio.\n"+
+    "- Ver video no atractivo: +5% de Progreso actual.\n"
+  );
+});
 
-function actualizarUI(){
-  stats.textContent=`Ultimo día jugado: ${ultimoDia}`;
-  probTxt.textContent=`Probabilidad actual: ${prob}%`;
-  rachaTxt.textContent=`Racha: ${racha} días`;
-}
-
-renderHistorial();
-actualizarUI();
+document.getElementById("reiniciarBtn").addEventListener("click",()=>{
+  if(!confirm("Se reiniciará todo el progreso. ¿Continuar?")) return;
+  localStorage.clear();
+  location.reload();
+});
 </script>
 </body>
 </html>
