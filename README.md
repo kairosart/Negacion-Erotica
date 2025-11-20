@@ -54,3 +54,14 @@ Puedes ver un video “no atractivo” para subir tu Probabilidad actual en **+5
 | 🏆 **Condición de victoria** | Solo hay premio si los tres símbolos son iguales (🍒🍒🍒, 🍋🍋🍋, 🔔🔔🔔, 💎💎💎). |
 | 📊 **Probabilidad actual** | Empieza en 50. Cambios: Ganar +0.2 · Perder −0.05 · Video +5 · No jugar −10. |
 | 🎥 **Acción extra**      | Ver video “no atractivo” = +5% de probabilidad actual. |
+
+
+## 🏆 Tabla de Premios
+
+| 🎰 Combinación | 🎁 Premio otorgado |
+|----------------|-------------------|
+| 🍒🍒🍒 | Arruinado en 1 minuto |
+| 🍋🍋🍋 | Arruinado en 3 minutos |
+| 🔔🔔🔔 | Arruinado en 5 minutos |
+| 💎💎💎 | Arruinado en 10 minutos |
+| ⭐⭐⭐ | Modo especial: Orgasmo |
