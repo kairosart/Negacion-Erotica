@@ -3,9 +3,10 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Tragaperras Negación Erótica</title>
+<title>Negación Erótica Test</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="premios.js"></script> <!-- Aquí cargamos los premios externos -->
+<script src="premios.js"></script>
+
 <style>
   body { background: #111; color: #fff; font-family: system-ui; text-align: center; padding: 20px; }
   button { padding: 10px 16px; margin: 5px; border: none; border-radius: 8px; background: #0af; color: #fff; font-weight: bold; cursor: pointer; }
@@ -13,19 +14,50 @@
   #slotContainer { display: flex; justify-content: center; margin-top: 20px; }
   .cell { width: 80px; height: 80px; background: #222; border-radius: 8px; margin: 0 5px; display: flex; justify-content: center; align-items: center; font-size: 40px; transition: transform 0.3s; }
   canvas { background: #111; margin-top: 10px; border-radius: 8px; }
-  table { margin: 10px auto; border-collapse: collapse; display: none; }
+  table { margin: 10px auto; border-collapse: collapse; }
   th, td { border: 1px solid #0af; padding: 6px 10px; }
   th { background: #0af; color: #111; }
   #estadoJuego { margin-bottom: 20px; max-width: 700px; margin-left: auto; margin-right: auto; color: #fff; font-family: monospace; text-align: left; }
   #msgIntento { color: #ff5252; font-weight: bold; font-size: 1.1em; margin-bottom: 8px; text-align: center; }
   #historialBox { background: #222; padding: 10px; border-radius: 10px; font-size: 14px; color: #eee; max-height: 220px; overflow-y: auto; }
   #historialBox h3 { margin-top: 0; font-weight: bold; text-align: center; }
-  #historialDetalles div { margin: 4px 0; }
   .premio-especial { background-color: yellow; color: #000; font-weight: bold; padding: 2px 4px; border-radius: 4px; }
+
+  /* Modal */
+  #tablaModal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    display: none;
+    justify-content: center;
+    align-items: center;
+  }
+  #tablaModal.show { display: flex !important; }
+  #tablaModal .modal-content {
+    background: #222;
+    padding: 20px;
+    border-radius: 10px;
+    width: 90%;
+    max-width: 520px;
+    position: relative;
+  }
+  #tablaClose {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: red;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+  }
 </style>
 </head>
 <body>
-<h1>🎰 Negación Erótica</h1>
+
+<h1>🎰 Negación Erótica Test</h1>
 
 <div id="estadoJuego">
   <p id="msgIntento"></p>
@@ -53,7 +85,7 @@
 <button id="verVideoBtn">🎥 Ver video no atractivo (+5%)</button>
 <button id="verReglasBtn">📜 Ver Reglas</button>
 <button id="simularBtn">🧪 Simular 365 días</button>
-<button id="verPremiosBtn">🏆 Ver Premios</button>
+<button id="verTablaBtn">🏆 Ver Premios</button>
 <button id="reiniciarBtn">🔄 Reiniciar</button>
 
 <h3>Frecuencia de premios</h3>
@@ -62,10 +94,15 @@
 <h3>Evolución de “Probabilidad actual”</h3>
 <canvas id="probabilidadCanvas" width="700" height="180"></canvas>
 
-<h3>Tabla de Premios</h3>
-<table id="tablaPremios">
-  <tr><th>Combinación</th><th>Premio</th></tr>
-</table>
+
+<!-- Modal Premios -->
+<div id="tablaModal" aria-hidden="true">
+  <div class="modal-content">
+    <button id="tablaClose">X</button>
+    <h2>Premios</h2>
+    <div id="tablaPremiosInner"></div>
+  </div>
+</div>
 
 <script>
 /* =========================
@@ -77,9 +114,6 @@ const tablaPremios = document.getElementById("tablaPremios");
 const resultadoTirada = document.getElementById("resultadoTirada");
 
 let symbolsBase = ["🍒","🍋","🔔","💎","⭐"];
-// premios ya vienen de premios.js
-// let premios = window.premios;
-
 let prob = parseFloat(localStorage.getItem("prob")) || 50;
 let ultimoDia = localStorage.getItem("ultimoDia") || "";
 let racha = parseInt(localStorage.getItem("racha")) || 0;
@@ -110,10 +144,9 @@ function addHistorial(texto, especial=false){
 }
 
 function renderHistorial(){
-  historialDiv.innerHTML = historial.map(h => {
-    const cls = h.especial ? 'premio-especial' : '';
-    return `<div class="${cls}">📅 ${h.fecha}: ${h.texto}</div>`;
-  }).join("");
+  historialDiv.innerHTML = historial
+    .map(h => `<div class="${h.especial ? 'premio-especial' : ''}">📅 ${h.fecha}: ${h.texto}</div>`)
+    .join("");
 }
 
 function actualizarTablaPremios(){
@@ -141,15 +174,16 @@ function actualizarGraficoPremios() {
   const conteo = contarPremios();
   const labels = Object.keys(conteo);
   const data = Object.values(conteo);
+
+  // Colores: amarillo si la etiqueta incluye "orgasmo", azul normal para los demás
   const backgroundColors = labels.map(label => {
-    if(label.toLowerCase().includes("orgasmo")) return "#ff0"; // Amarillo para orgasmo
-    return "#0af";
+    return label.toLowerCase().includes("orgasmo") ? "#ff0" : "#0af";
   });
 
   if(premiosChart) premiosChart.destroy();
   premiosChart = new Chart(ctx,{
     type:"bar",
-    data:{ labels, datasets:[{label:"Veces que salió", data, backgroundColor:backgroundColors}]},
+    data:{ labels, datasets:[{label:"Veces que salió", data, backgroundColor: backgroundColors}]},
     options:{
       plugins:{ legend:{ display:false }},
       scales:{
@@ -160,15 +194,50 @@ function actualizarGraficoPremios() {
   });
 }
 
+
+// ============================
+// Gráfico probabilidad
+// ============================
+function actualizarGraficoProbabilidad(){
+  const ctx = document.getElementById("probabilidadCanvas").getContext("2d");
+  const labels = probHistorial.map((_,i)=>i+1);
+  const data = probHistorial.map(v => v);
+
+  const pointColors = data.map((v,i)=>{
+    const h = historial[i];
+    return h && h.texto.toLowerCase().includes("orgasmo") ? "#ff0" : "#0af";
+  });
+
+  if(probChart) probChart.destroy();
+  probChart = new Chart(ctx,{
+    type:"line",
+    data:{
+      labels: labels,
+      datasets:[{
+        label:"Probabilidad actual (%)",
+        data: data,
+        borderColor:"#0af",
+        pointBackgroundColor: pointColors,
+        fill:false
+      }]
+    },
+    options:{ plugins:{ legend:{ display:true } } }
+  });
+}
+
 function actualizarGraficoProbabilidad(){
   const ctx = document.getElementById("probabilidadCanvas").getContext("2d");
   if(probChart) probChart.destroy();
   probChart = new Chart(ctx,{
     type:"line",
-    data:{ labels:probHistorial.map((_,i)=>i+1), datasets:[{label:"Probabilidad actual (%)", data:probHistorial, borderColor:"#0af", fill:false}]},
-    options:{ plugins:{ legend:{ display:true } } }
+    data:{
+      labels:probHistorial.map((_,i)=>i+1),
+      datasets:[{label:"Probabilidad actual (%)", data:probHistorial, borderColor:"#0af", fill:false}]
+    },
+    options: { plugins: { legend: { display: true } } }
   });
 }
+
 
 function actualizarEstadoJuego(){
   document.getElementById("msgIntento").textContent = (ultimoDia===hoy()) ? "Hoy ya usaste tu intento." : "";
@@ -202,7 +271,7 @@ function getSymbolsModoEspecial(){
 }
 
 /* =========================
-   Animación y juego
+   Animación
 ========================= */
 function girarRodillos(finalSymbols, onFinish){
   let spins=15, count=0;
@@ -252,7 +321,7 @@ document.getElementById("spinBtn").addEventListener("click", ()=>{
 });
 
 /* =========================
-   Ver Video
+   Ver video
 ========================= */
 document.getElementById("verVideoBtn").addEventListener("click",()=>{
   prob=Math.min(prob+5,100);
@@ -264,10 +333,28 @@ document.getElementById("verVideoBtn").addEventListener("click",()=>{
 });
 
 /* =========================
-   Ver Premios
+   Modal Premios
 ========================= */
-document.getElementById("verPremiosBtn").addEventListener("click",()=>{
-  tablaPremios.style.display = (tablaPremios.style.display === "none") ? "table" : "none";
+const tablaModal = document.getElementById('tablaModal');
+const tablaInner = document.getElementById('tablaPremiosInner');
+const tablaClose = document.getElementById('tablaClose');
+
+document.getElementById('verTablaBtn').addEventListener('click',()=>{
+  let html='<table><tr><th>Combinación</th><th>Premio</th></tr>';
+  Object.entries(premios).forEach(([k,v])=>{html+=`<tr><td>${k}</td><td>${v}</td></tr>`;});
+  html+='</table>';
+  tablaInner.innerHTML = html;
+  tablaModal.classList.add('show');
+  tablaModal.setAttribute('aria-hidden','false');
+});
+
+tablaClose.addEventListener('click',()=>{
+  tablaModal.classList.remove('show');
+  tablaModal.setAttribute('aria-hidden','true');
+});
+
+tablaModal.addEventListener('click',(e)=>{
+  if(e.target===tablaModal) tablaClose.click();
 });
 
 /* =========================
@@ -325,7 +412,7 @@ document.getElementById("simularBtn").addEventListener("click",()=>{
 });
 
 /* =========================
-   Reiniciar todo
+   Reinicio total
 ========================= */
 document.getElementById("reiniciarBtn").addEventListener("click",()=>{
   if(!confirm("Se reiniciará todo el progreso. ¿Continuar?")) return;
@@ -346,5 +433,6 @@ actualizarGraficoProbabilidad();
 actualizarGraficoPremios();
 actualizarEstadoJuego();
 </script>
+
 </body>
 </html>
