@@ -38,7 +38,7 @@ button:disabled { background: #555; cursor: not-allowed; }
 /* Modales */
 .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.68);backdrop-filter:blur(3px);align-items:center;justify-content:center;z-index:3000;}
 .modal.show{display:flex;}
-.modal-card{background:var(--panel);color:var(--text);padding:18px;border-radius:12px;border:2px solid var(--accent);box-shadow:0 8px 30px rgba(0,0,0,0.6);max-width:92%;width:520px;max-height:86%;overflow:auto;position:relative;}
+.modal-card{background:var(--panel);color:var(--text);padding:18px;border-radius:12px;border:2px solid var(--accent);box-shadow:0 8px 30px rgba(0,0,0,0.6);max-width:92%;width:520px;max-height:86%;overflow:auto;}
 .modal-close{position:absolute;right:12px;top:10px;font-size:22px;cursor:pointer;color:var(--accent);}
 table{width:100%;border-collapse:collapse;margin-top:10px;}
 th,td{border:1px solid var(--accent);padding:8px;text-align:left;}
@@ -63,6 +63,8 @@ th{background:var(--accent);color:#001;}
   <div class="cell" id="c0">🍒</div>
   <div class="cell" id="c1">🍋</div>
   <div class="cell" id="c2">🔔</div>
+  <!-- Nuevo rodillo de números 1-9 -->
+  <div class="cell" id="c3">1</div>
 </div>
 
 <!-- Resultado -->
@@ -75,6 +77,7 @@ th{background:var(--accent);color:#001;}
   <button id="verTablaBtn">📜 Ver Tabla de Premios</button>
   <button id="verReglasBtn">📘 Ver Reglas</button>
   <button id="reiniciarBtn">🔄 Reiniciar</button>
+  <button id="exportCsvBtn">💾 Exportar CSV</button>
 </div>
 
 <!-- Historial -->
@@ -110,7 +113,7 @@ th{background:var(--accent);color:#001;}
 /* =========================
    Estado y persistencia
 ========================= */
-const cells = [0,1,2].map(i=>document.getElementById('c'+i));
+const cells = [0,1,2,3].map(i=>document.getElementById('c'+i));
 const resultadoDiv = document.getElementById('resultadoTirada');
 const historialDiv = document.getElementById('historialDetalles');
 const fechaTxt = document.getElementById('fechaTxt');
@@ -165,14 +168,19 @@ function addHistorial(texto, especial=false){
    Símbolos / Modo Especial
 ========================= */
 function getSymbol(){ return symbolsBase[Math.floor(Math.random()*symbolsBase.length)]; }
+function getNumberSymbol(){ return String(Math.floor(Math.random()*9)+1); }
+
 function getSymbolsModoEspecial(){
-  if(racha < 20) return [getSymbol(), getSymbol(), getSymbol()];
+  // Ahora devuelve 4 símbolos: los 3 habituales y un número para el cuarto rodillo
+  if(racha < 20) return [getSymbol(), getSymbol(), getSymbol(), getNumberSymbol()];
   let probEstrella = 0;
   if(racha >= 25) probEstrella = 0.10;
   if(racha >= 30) probEstrella = 0.15;
   if(racha >= 35) probEstrella = 0.20;
   let symbols = [];
   for(let i=0;i<3;i++) symbols.push(Math.random()<probEstrella ? "⭐" : getSymbol());
+  // Añadir cuarto rodillo numérico
+  symbols.push(getNumberSymbol());
   if(premiosEspecialesPost20 < 3 && !symbols.includes("⭐")){
     symbols[Math.floor(Math.random()*3)]="⭐";
     premiosEspecialesPost20++;
@@ -184,7 +192,10 @@ function getSymbolsModoEspecial(){
 function girarRodillos(finalSymbols, onFinish){
   let spins=15,count=0;
   const interval=setInterval(()=>{
-    cells.forEach(c=>c.textContent=getSymbol());
+    // durante la animación, los tres primeros muestran símbolos, el cuarto muestra números
+    cells.forEach((c,i)=>{
+      c.textContent = (i < 3) ? getSymbol() : getNumberSymbol();
+    });
     count++;
     if(count>=spins){
       clearInterval(interval);
@@ -197,25 +208,26 @@ function girarRodillos(finalSymbols, onFinish){
 /* Evento girar */
 document.getElementById('spinBtn').addEventListener('click',()=>{
   if(ultimoDia===hoy()){ alert('Solo 1 tirada por día.'); return; }
-  let s1,s2,s3,esEspecial=false;
+  let s1,s2,s3,s4,esEspecial=false;
   if(racha>=20){
-    [s1,s2,s3]=getSymbolsModoEspecial();
+    [s1,s2,s3,s4]=getSymbolsModoEspecial();
     esEspecial=(s1==="⭐"&&s2==="⭐"&&s3==="⭐");
   }else{
-    [s1,s2,s3]=[getSymbol(),getSymbol(),getSymbol()];
+    [s1,s2,s3,s4]=[getSymbol(),getSymbol(),getSymbol(),getNumberSymbol()];
   }
-  girarRodillos([s1,s2,s3],()=>{
+  girarRodillos([s1,s2,s3,s4],()=>{
     const combo=s1+s2+s3;
     let premioTexto="Sin premio",hayPremio=false;
     if(s1===s2 && s2===s3){ premioTexto=premios[combo]||"🎉 Ganaste!"; hayPremio=true; prob+=0.2; }
     else if(s1===s2){ premioTexto=premios[s1+s2]||"Premio doble!"; hayPremio=true; prob+=0.1; }
     else if(s2===s3){ premioTexto=premios[s2+s3]||"Premio doble!"; hayPremio=true; prob+=0.1; }
     else{ prob-=0.05; }
+    // opcional: el cuarto rodillo no afecta las combinaciones principales, pero lo registramos en historial
     prob=Math.min(Math.max(prob,0),100);
     racha++; ultimoDia=hoy();
-    resultadoDiv.textContent=premioTexto;
+    resultadoDiv.textContent=`${premioTexto} (N:${s4})`;
     resultadoDiv.className=hayPremio?'premio-verde':'premio-rojo';
-    addHistorial(`Tirada: ${combo} — ${premioTexto}`, esEspecial);
+    addHistorial(`Tirada: ${combo} | N:${s4} — ${premioTexto}`, esEspecial);
     actualizarEstado();
     guardar();
   });
@@ -253,10 +265,34 @@ document.getElementById('verTablaBtn').addEventListener('click',()=>{
 tablaClose.addEventListener('click',()=>{ tablaModal.classList.remove('show'); tablaModal.setAttribute('aria-hidden','true'); });
 tablaModal.addEventListener('click',(e)=>{ if(e.target===tablaModal) tablaClose.click(); });
 
+/* Exportar historial a CSV */
+function downloadCSV(){
+  if(!historial || historial.length===0){
+    alert('No hay historial para exportar.');
+    return;
+  }
+  const headers = ['fecha','texto','especial'];
+  const escape = s => `"${String(s).replace(/"/g,'""')}"`;
+  const rows = historial.map(h => [h.fecha, h.texto, h.especial ? '1' : '0']);
+  let csv = '\uFEFF' + headers.map(escape).join(',') + '\n' + rows.map(r => r.map(escape).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  const d = new Date();
+  const fname = `historial_${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}.csv`;
+  a.download = fname;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+document.getElementById('exportCsvBtn').addEventListener('click', downloadCSV);
+
 /* Reglas */
 document.getElementById('verReglasBtn').addEventListener('click',()=>{
   alert(
-    "Reglas:\n- Solo 1 tirada permitida por día.\n- Racha 20 días activa modo especial ⭐\n- Dobles solo si están juntos\n- La probabilidad sube al ganar y al ver el video, baja al perder\n- Video bonus solo 1 vez al día (+5%)"
+    "Reglas:\n- Solo 1 tirada permitida por día.\n- Racha 20 días activa modo especial ⭐\n- Dobles solo si están juntos\n- La probabilidad sube al ganar y al ver el video, baja al perder\n- Video..."
   );
 });
 
