@@ -5,9 +5,9 @@ const premios = {
   "🔔🔔🔔":"Arruinado en camisón.",
   "💎💎💎":"Masaje prostático.",
   "⭐⭐⭐":"🎉 ORGASMO!",
-  "🍒🍒":"Manipulacion clit. satisf.",
+  "🍒🍒":"Lengua en el clitoris",
   "🍋🍋":"Azotes en las nalgas",
   "🔔🔔":"De rodillas con el collar y pinzas",
   "💎💎":"Miembro en vagina con estim. clit.",
-  "⭐⭐":"Lengua en el clitoris"
+  "⭐⭐":"Manipulacion clit. satisf."
 };
