@@ -77,7 +77,6 @@ th{background:var(--accent);color:#001;}
 
 </div>
 
-<!-- Botón móvil para test -->
 <button id="toggleTestBtn">🔧 Test</button>
 
 <div id="videoModal" class="modal">
@@ -116,6 +115,7 @@ let prob = parseFloat(localStorage.getItem('prob')) || 50;
 let racha = parseInt(localStorage.getItem('racha')) || 0;
 let historial = JSON.parse(localStorage.getItem('historialDias') || '[]');
 let premiosEspecialesPost20 = parseInt(localStorage.getItem('premiosEspecialesPost20') || '0');
+let ultimoDia = localStorage.getItem('ultimoDia') || '';
 let ultimoVideoDia = localStorage.getItem('ultimoVideoDia') || '';
 
 let ultimosDobles = []; // historial de últimos 5 tiradas para limitar dobles
@@ -133,6 +133,7 @@ function guardar(){
   localStorage.setItem('racha', racha);
   localStorage.setItem('historialDias', JSON.stringify(historial));
   localStorage.setItem('premiosEspecialesPost20', premiosEspecialesPost20);
+  localStorage.setItem('ultimoDia', ultimoDia);
   localStorage.setItem('ultimoVideoDia', ultimoVideoDia);
 }
 
@@ -185,10 +186,15 @@ function girarRodillos(finalSymbols, onFinish){
   },80);
 }
 
+// Evento girar
 document.getElementById('spinBtn').addEventListener('click', ()=>{
+  if(ultimoDia === hoy()){
+    alert('Solo 1 tirada por día.');
+    return;
+  }
+
   let s1,s2,s3,s4,esEspecial=false;
 
-  // Generar símbolos con límite de dobles
   function getSymbolControlled(prev){
     if(prev && Math.random() < 0.10){
       return prev;
@@ -203,7 +209,6 @@ document.getElementById('spinBtn').addEventListener('click', ()=>{
   s4 = getNumberSymbol();
   [s1,s2,s3] = [a,b,c];
 
-  // registrar dobles
   if(s1===s2 || s2===s3) ultimosDobles.push(s1===s2?s1:s2);
   if(ultimosDobles.length>5) ultimosDobles.shift();
 
@@ -216,6 +221,7 @@ document.getElementById('spinBtn').addEventListener('click', ()=>{
     else{ prob-=0.05; }
     prob = Math.min(Math.max(prob,0),100);
     racha++;
+    ultimoDia = hoy();
     resultadoDiv.textContent=`${premioTexto} (N:${s4})`;
     resultadoDiv.className = hayPremio?'premio-verde':'premio-rojo';
     addHistorial(`Tirada: ${combo} | N:${s4} — ${premioTexto}`, esEspecial);
@@ -255,12 +261,12 @@ tablaClose.addEventListener('click',()=>{ tablaModal.classList.remove('show'); t
 tablaModal.addEventListener('click',(e)=>{ if(e.target===tablaModal) tablaClose.click(); });
 
 // Reglas
-document.getElementById('verReglasBtn').addEventListener('click',()=>{ alert("Reglas:\n- Tiradas ilimitadas\n- Dobles limitados a 2 en 5 tiradas\n- Racha y probabilidad ajustables\n- Video aumenta +5%"); });
+document.getElementById('verReglasBtn').addEventListener('click',()=>{ alert("Reglas:\n- Solo 1 tirada por día\n- Dobles limitados a 2 en 5 tiradas\n- Racha y probabilidad ajustables\n- Video aumenta +5%"); });
 
 // Reiniciar
 document.getElementById('reiniciarBtn').addEventListener('click',()=>{
   if(!confirm('Se reiniciará todo el progreso.')) return;
-  historial=[]; prob=50; racha=0; ultimosDobles=[]; premiosEspecialesPost20=0; ultimoVideoDia='';
+  historial=[]; prob=50; racha=0; ultimosDobles=[]; premiosEspecialesPost20=0; ultimoDia=''; ultimoVideoDia='';
   resultadoDiv.textContent='👉 Esperando tirada...'; resultadoDiv.className='';
   renderHistorial(); actualizarPanelTest(); guardar();
 });
