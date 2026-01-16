@@ -32,9 +32,8 @@ table{width:100%;border-collapse:collapse;margin-top:10px;}
 th,td{border:1px solid var(--accent);padding:8px;text-align:left;}
 th{background:var(--accent);color:#001;}
 #videoEl{width:100%;height:auto;border-radius:8px;}
-#panelTest{display:none;background:#333;color:#0f0;padding:12px;border-radius:10px;margin-top:20px;max-height:200px;overflow:auto;}
 @media (max-width:520px){.cell{width:64px;height:64px;font-size:34px} #resultadoTirada{font-size:20px}}
-#toggleTestBtn{position:fixed;bottom:10px;right:10px;z-index:5000;padding:8px 12px;background:#0af;color:#fff;border:none;border-radius:6px;}
+#openEstadisticasBtn{position:fixed;bottom:10px;right:10px;z-index:5000;padding:8px 12px;background:#0af;color:#fff;border:none;border-radius:6px;}
 </style>
 </head>
 <body>
@@ -69,16 +68,11 @@ th{background:var(--accent);color:#001;}
   <h3>Historial de días</h3>
   <div id="historialDetalles"></div>
 </div>
-
-<div id="panelTest">
-  <h3>📊 Panel de Estadísticas Test</h3>
-  <div id="estadisticasTest"></div>
 </div>
 
-</div>
+<button id="openEstadisticasBtn">🔧 Test</button>
 
-<button id="toggleTestBtn">🔧 Test</button>
-
+<!-- Modal Video -->
 <div id="videoModal" class="modal">
   <div class="modal-card">
     <span id="videoClose" class="modal-close">&times;</span>
@@ -89,11 +83,21 @@ th{background:var(--accent);color:#001;}
   </div>
 </div>
 
+<!-- Modal Tabla Premios -->
 <div id="tablaModal" class="modal">
   <div class="modal-card">
     <span id="tablaClose" class="modal-close">&times;</span>
     <h2>🏆 Tabla de Premios</h2>
     <div id="tablaPremiosInner"></div>
+  </div>
+</div>
+
+<!-- Modal Estadísticas -->
+<div id="estadisticasModal" class="modal">
+  <div class="modal-card">
+    <span id="estadisticasClose" class="modal-close">&times;</span>
+    <h2>📊 Estadísticas Test</h2>
+    <div id="estadisticasModalInner"></div>
   </div>
 </div>
 
@@ -107,8 +111,6 @@ const historialDiv = document.getElementById('historialDetalles');
 const fechaTxt = document.getElementById('fechaTxt');
 const rachaTxt = document.getElementById('rachaTxt');
 const probTxt = document.getElementById('probTxt');
-const panelTest = document.getElementById('panelTest');
-const estadisticasTest = document.getElementById('estadisticasTest');
 
 let symbolsBase = ["🍒","🍋","🔔","💎","⭐"];
 let prob = parseFloat(localStorage.getItem('prob')) || 50;
@@ -117,7 +119,6 @@ let historial = JSON.parse(localStorage.getItem('historialDias') || '[]');
 let premiosEspecialesPost20 = parseInt(localStorage.getItem('premiosEspecialesPost20') || '0');
 let ultimoDia = localStorage.getItem('ultimoDia') || '';
 let ultimoVideoDia = localStorage.getItem('ultimoVideoDia') || '';
-
 let ultimosDobles = [];
 
 function hoy(){
@@ -137,11 +138,10 @@ function guardar(){
   localStorage.setItem('ultimoVideoDia', ultimoVideoDia);
 }
 
-function actualizarEstado(){
-  fechaTxt.textContent = hoy();
-  rachaTxt.textContent = racha;
-  probTxt.textContent = prob.toFixed(2);
-  actualizarPanelTest();
+function actualizarEstado(){ 
+  fechaTxt.textContent = hoy(); 
+  rachaTxt.textContent = racha; 
+  probTxt.textContent = prob.toFixed(2); 
 }
 
 function renderHistorial(){
@@ -155,25 +155,15 @@ function addHistorial(texto, especial=false){
   historial.push({fecha:hoy(), texto, especial});
   renderHistorial();
   guardar();
-  actualizarPanelTest();
 }
 
-function actualizarPanelTest(){
-  const total = historial.length;
-  const triples = historial.filter(h=>h.texto.includes("Triple")).length;
-  const dobles = historial.filter(h=>h.texto.includes("doble")).length;
-  const sin = total - triples - dobles;
-  estadisticasTest.innerHTML = `
-    Total: ${total} | Triples: ${triples} | Dobles: ${dobles} | Sin premio: ${sin}
-  `;
-}
-
+// Símbolos
 function getSymbol(){ return symbolsBase[Math.floor(Math.random()*symbolsBase.length)]; }
 function getNumberSymbol(){ return String(Math.floor(Math.random()*9)+1); }
 
 function girarRodillos(finalSymbols, onFinish){
   let spins=15, count=0;
-  const interval = setInterval(()=>{
+  const interval=setInterval(()=>{
     cells.forEach((c,i)=>{
       c.textContent = (i<3)?getSymbol():getNumberSymbol();
     });
@@ -186,7 +176,7 @@ function girarRodillos(finalSymbols, onFinish){
   },80);
 }
 
-// Evento girar seguro móvil
+// Evento girar con límite 1 tirada/día
 document.getElementById('spinBtn').addEventListener('click', ()=>{
   const hoyActual = hoy();
   if(ultimoDia === hoyActual){
@@ -197,16 +187,14 @@ document.getElementById('spinBtn').addEventListener('click', ()=>{
   let s1,s2,s3,s4,esEspecial=false;
 
   function getSymbolControlled(prev){
-    if(prev && Math.random() < 0.10){
-      return prev;
-    }
+    if(prev && Math.random()<0.10) return prev;
     let s; do { s=getSymbol(); } while(s===prev && ultimosDobles.filter(d=>d===s).length>=2);
     return s;
   }
 
-  let a = getSymbol();
-  let b = getSymbolControlled(a);
-  let c = getSymbolControlled(b);
+  let a=getSymbol();
+  let b=getSymbolControlled(a);
+  let c=getSymbolControlled(b);
   s4 = getNumberSymbol();
   [s1,s2,s3] = [a,b,c];
 
@@ -214,15 +202,15 @@ document.getElementById('spinBtn').addEventListener('click', ()=>{
   if(ultimosDobles.length>5) ultimosDobles.shift();
 
   girarRodillos([s1,s2,s3,s4], ()=>{
-    let combo = s1+s2+s3;
+    let combo=s1+s2+s3;
     let premioTexto="Sin premio", hayPremio=false;
-    if(s1===s2 && s2===s3){ premioTexto = premios[combo]||"🎉 Ganaste!"; hayPremio=true; prob+=0.2; }
+    if(s1===s2 && s2===s3){ premioTexto=premios[combo]||"🎉 Ganaste!"; hayPremio=true; prob+=0.2; }
     else if(s1===s2){ premioTexto=premios[s1+s2]||"Premio doble!"; hayPremio=true; prob+=0.1; }
     else if(s2===s3){ premioTexto=premios[s2+s3]||"Premio doble!"; hayPremio=true; prob+=0.1; }
     else{ prob-=0.05; }
     prob = Math.min(Math.max(prob,0),100);
     racha++;
-    ultimoDia = hoyActual; // bloquea futuras tiradas hoy
+    ultimoDia = hoyActual;
     resultadoDiv.textContent=`${premioTexto} (N:${s4})`;
     resultadoDiv.className = hayPremio?'premio-verde':'premio-rojo';
     addHistorial(`Tirada: ${combo} | N:${s4} — ${premioTexto}`, esEspecial);
@@ -231,14 +219,127 @@ document.getElementById('spinBtn').addEventListener('click', ()=>{
   });
 });
 
-// Botón panel test
-document.getElementById('toggleTestBtn').addEventListener('click', ()=>{
-  panelTest.style.display = panelTest.style.display==='none'?'block':'none';
+// Modal Estadísticas
+const estadisticasModal = document.getElementById('estadisticasModal');
+const estadisticasClose = document.getElementById('estadisticasClose');
+const estadisticasModalInner = document.getElementById('estadisticasModalInner');
+
+document.getElementById('openEstadisticasBtn').addEventListener('click', ()=>{
+  const total = historial.length;
+  const triples = historial.filter(h=>h.texto.includes("Triple")).length;
+  const dobles = historial.filter(h=>h.texto.includes("doble")).length;
+  const sin = total - triples - dobles;
+  estadisticasModalInner.innerHTML = `
+    Total tiradas: ${total} <br>
+    Triples: ${triples} <br>
+    Dobles: ${dobles} <br>
+    Sin premio: ${sin}
+  `;
+  estadisticasModal.classList.add('show');
+  estadisticasModal.setAttribute('aria-hidden','false');
+});
+
+estadisticasClose.addEventListener('click', ()=>{
+  estadisticasModal.classList.remove('show');
+  estadisticasModal.setAttribute('aria-hidden','true');
+});
+estadisticasModal.addEventListener('click', (e)=>{
+  if(e.target===estadisticasModal) estadisticasClose.click();
 });
 
 // Inicializar
-actualizarEstado(); renderHistorial(); actualizarPanelTest();
+actualizarEstado();
+renderHistorial();
 resultadoDiv.textContent='👉 Esperando tirada...';
+
+
+/* ===============================
+   BOTONES Y MODALES
+================================ */
+
+// ---- VIDEO ----
+const videoModal = document.getElementById('videoModal');
+const videoClose = document.getElementById('videoClose');
+const videoEl = document.getElementById('videoEl');
+
+document.getElementById('verVideoBtn').addEventListener('click', () => {
+  const hoyActual = hoy();
+  if (ultimoVideoDia === hoyActual) {
+    alert('El video ya fue visto hoy.');
+    return;
+  }
+  videoModal.classList.add('show');
+  videoEl.currentTime = 0;
+  videoEl.play();
+});
+
+videoClose.addEventListener('click', () => {
+  videoModal.classList.remove('show');
+  videoEl.pause();
+});
+
+videoEl.addEventListener('ended', () => {
+  ultimoVideoDia = hoy();
+  prob = Math.min(prob + 5, 100);
+  guardar();
+  actualizarEstado();
+  videoModal.classList.remove('show');
+});
+
+// ---- TABLA DE PREMIOS ----
+const tablaModal = document.getElementById('tablaModal');
+const tablaClose = document.getElementById('tablaClose');
+const tablaInner = document.getElementById('tablaPremiosInner');
+
+document.getElementById('verTablaBtn').addEventListener('click', () => {
+  let html = '<table><tr><th>Combinación</th><th>Premio</th></tr>';
+  for (const k in premios) {
+    html += `<tr><td>${k}</td><td>${premios[k]}</td></tr>`;
+  }
+  html += '</table>';
+  tablaInner.innerHTML = html;
+  tablaModal.classList.add('show');
+});
+
+tablaClose.addEventListener('click', () => {
+  tablaModal.classList.remove('show');
+});
+
+// ---- REGLAS ----
+document.getElementById('verReglasBtn').addEventListener('click', () => {
+  alert(
+`📘 REGLAS
+
+🎰 Solo 1 tirada al día
+🎥 Ver el video suma +5%
+🎯 Dobles y triples dan premio
+📊 El panel Test es solo para pruebas`
+  );
+});
+
+// ---- REINICIAR ----
+document.getElementById('reiniciarBtn').addEventListener('click', () => {
+  if (!confirm('¿Seguro que quieres reiniciar TODO?')) return;
+
+  localStorage.clear();
+  location.reload();
+});
+
+// ---- EXPORTAR CSV ----
+document.getElementById('exportCsvBtn').addEventListener('click', () => {
+  let csv = 'Fecha,Resultado\n';
+  historial.forEach(h => {
+    csv += `"${h.fecha}","${h.texto}"\n`;
+  });
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'historial.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+});
 
 });
 </script>
